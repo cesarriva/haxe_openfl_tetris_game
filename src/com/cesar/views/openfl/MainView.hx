@@ -16,6 +16,7 @@ import openfl.text.TextFormatAlign;
 class MainView extends Sprite
 {
 	private var startGameMessage:TextField;
+	private var instructionMessage:TextField;
 		
 	public function new() 
 	{
@@ -34,17 +35,30 @@ class MainView extends Sprite
 	
 	private function setInstructionGameText()
 	{
-		var formatText:TextFormat = new TextFormat("_sans", 16, 0xbbbbbb, true);
-		formatText.align = TextFormatAlign.CENTER;
+		var gameMessageFormatText:TextFormat = new TextFormat("_sans", 16, 0xbbbbbb, true);
+		gameMessageFormatText.align = TextFormatAlign.CENTER;
 		
 		startGameMessage = new TextField();
 		startGameMessage.x = (SizeConstants.BOARD_WIDTH + 20);
 		startGameMessage.y = SizeConstants.BOARD_INITIAL_Y_POSITION;
-		startGameMessage.width = 320;
-		startGameMessage.height = 300;
-		startGameMessage.defaultTextFormat = formatText;
+		startGameMessage.width = 400;
+		startGameMessage.height = 100;
+		startGameMessage.defaultTextFormat = gameMessageFormatText;
 		startGameMessage.selectable = false;
-		startGameMessage.text = "CLICK on the screen and PRESS SPACE to start\n\nUp arrow - Rotate clockwise\nRight arrow - Move right\nDown arrow - Down one unit\nLeft arrow - Move left";
+		startGameMessage.text = "CLICK on the screen and PRESS SPACE to START\n\n";
 		addChild(startGameMessage);
+		
+		var instructionFormatText:TextFormat = new TextFormat("_sans", 16, 0xbbbbbb, true);
+		instructionFormatText.align = TextFormatAlign.LEFT;
+		
+		instructionMessage = new TextField();
+		instructionMessage.x = startGameMessage.x;
+		instructionMessage.y = startGameMessage.y + 30;
+		instructionMessage.width = 170;
+		instructionMessage.height = 300;
+		instructionMessage.defaultTextFormat = instructionFormatText;
+		instructionMessage.selectable = false;
+		instructionMessage.text = "▲ - Rotate clockwise\n► - Move right\n▼ - Down one unit\n◄ - Move left";
+		addChild(instructionMessage);
 	}
 }

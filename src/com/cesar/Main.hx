@@ -10,7 +10,6 @@ import robotlegs.bender.framework.impl.Context;
 
 import com.cesar.commands.CommandConfig;
 import com.cesar.models.ModelConfig;
-import com.cesar.services.ServiceConfig;
 import com.cesar.views.ViewConfig;
 
 /**
@@ -27,7 +26,7 @@ class Main extends Sprite
 		
 		_context = new Context()
 			.install([MVCSBundle])
-			.configure([CommandConfig, ModelConfig, ServiceConfig, ViewConfig])
+			.configure([CommandConfig, ModelConfig, ViewConfig])
 			.configure(new ContextView(this));
 	}
 }
