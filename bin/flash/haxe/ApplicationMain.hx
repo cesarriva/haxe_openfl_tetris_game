@@ -91,10 +91,10 @@ class ApplicationMain {
 		
 		config = {
 			
-			build: "122",
+			build: "186",
 			company: "Cesar Riva",
 			file: "Tetris",
-			fps: 20,
+			fps: 60,
 			name: "Tetris",
 			orientation: "",
 			packageName: "com.cesar.Tetris",

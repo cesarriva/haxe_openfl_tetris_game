@@ -87,6 +87,22 @@ class TetrisBoardView extends Sprite
 			}
 			graphics.endFill();
 		}
+		
+		var actualBoard = tetrisBoard.get_Board();
+		
+		graphics.beginFill(0xB22222);
+		for (i in 0...actualBoard.length) 
+		{
+			for (j in 0...actualBoard[i].length) 
+			{
+				if (actualBoard[i][j])
+				{
+					graphics.drawRect((i * blockSize), (j * blockSize), blockSize, blockSize);
+				}
+			}
+		}
+		graphics.endFill();
+		
 	}
 	
 	private function setSizeVariables():Void

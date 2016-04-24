@@ -1,6 +1,6 @@
 package com.cesar.commands;
 
-import com.cesar.commands.signals.DefaultActionSignal;
+import com.cesar.commands.signals.ShapeActionSignal;
 import robotlegs.bender.framework.api.IConfig;
 import robotlegs.bender.extensions.signalCommandMap.api.ISignalCommandMap;
 
@@ -19,6 +19,6 @@ class CommandConfig implements IConfig
 	public function configure():Void
 	{
 		//all signals are maped to commands here
-		commandMap.map(DefaultActionSignal).toCommand(DefaultActionCommand);
+		commandMap.map(ShapeActionSignal).toCommand(ShapeActionCommand);
 	}
 }

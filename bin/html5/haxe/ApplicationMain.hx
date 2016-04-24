@@ -91,7 +91,7 @@ class ApplicationMain {
 		
 		config = {
 			
-			build: "3",
+			build: "184",
 			company: "Cesar Riva",
 			file: "Tetris",
 			fps: 60,

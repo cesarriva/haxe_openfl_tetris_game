@@ -45,7 +45,7 @@ ApplicationMain.init = function() {
 	if(total == 0) ApplicationMain.start();
 };
 ApplicationMain.main = function() {
-	ApplicationMain.config = { build : "3", company : "Cesar Riva", file : "Tetris", fps : 60, name : "Tetris", orientation : "", packageName : "com.cesar.Tetris", version : "1.0.0", windows : [{ antialiasing : 0, background : 16777215, borderless : false, depthBuffer : false, display : 0, fullscreen : false, hardware : false, height : 480, parameters : "{}", resizable : true, stencilBuffer : true, title : "Tetris", vsync : false, width : 800, x : null, y : null}]};
+	ApplicationMain.config = { build : "184", company : "Cesar Riva", file : "Tetris", fps : 60, name : "Tetris", orientation : "", packageName : "com.cesar.Tetris", version : "1.0.0", windows : [{ antialiasing : 0, background : 16777215, borderless : false, depthBuffer : false, display : 0, fullscreen : false, hardware : false, height : 480, parameters : "{}", resizable : true, stencilBuffer : true, title : "Tetris", vsync : false, width : 800, x : null, y : null}]};
 };
 ApplicationMain.start = function() {
 	var hasMain = false;
@@ -1455,7 +1455,7 @@ openfl_display_Sprite.prototype = $extend(openfl_display_DisplayObjectContainer.
 });
 var com_cesar_Main = function() {
 	openfl_display_Sprite.call(this);
-	this._context = new robotlegs_bender_framework_impl_Context().install([robotlegs_bender_bundles_mvcs_MVCSBundle]).configure([com_cesar_commands_CommandConfig,com_cesar_models_ModelConfig,com_cesar_services_ServiceConfig,com_cesar_views_ViewConfig]).configure(new robotlegs_bender_extensions_contextView_ContextView(this));
+	this._context = new robotlegs_bender_framework_impl_Context().install([robotlegs_bender_bundles_mvcs_MVCSBundle]).configure([com_cesar_commands_CommandConfig,com_cesar_models_ModelConfig,com_cesar_views_ViewConfig]).configure(new robotlegs_bender_extensions_contextView_ContextView(this));
 };
 $hxClasses["com.cesar.Main"] = com_cesar_Main;
 com_cesar_Main.__name__ = ["com","cesar","Main"];
@@ -1906,6 +1906,9 @@ Std.parseInt = function(x) {
 	if(isNaN(v)) return null;
 	return v;
 };
+Std.random = function(x) {
+	if(x <= 0) return 0; else return Math.floor(Math.random() * x);
+};
 var StringBuf = function() {
 	this.b = "";
 };
@@ -2225,37 +2228,698 @@ $hxClasses["com.cesar.commands.CommandConfig"] = com_cesar_commands_CommandConfi
 com_cesar_commands_CommandConfig.__name__ = ["com","cesar","commands","CommandConfig"];
 com_cesar_commands_CommandConfig.__interfaces__ = [robotlegs_bender_framework_api_IConfig];
 com_cesar_commands_CommandConfig.prototype = {
-	configure: function() {
+	commandMap: null
+	,configure: function() {
+		this.commandMap.map(com_cesar_commands_signals_ShapeActionSignal).toCommand(com_cesar_commands_ShapeActionCommand);
 	}
 	,__class__: com_cesar_commands_CommandConfig
 };
+var robotlegs_bender_extensions_commandCenter_api_ICommand = function() { };
+$hxClasses["robotlegs.bender.extensions.commandCenter.api.ICommand"] = robotlegs_bender_extensions_commandCenter_api_ICommand;
+robotlegs_bender_extensions_commandCenter_api_ICommand.__name__ = ["robotlegs","bender","extensions","commandCenter","api","ICommand"];
+robotlegs_bender_extensions_commandCenter_api_ICommand.prototype = {
+	execute: null
+	,__class__: robotlegs_bender_extensions_commandCenter_api_ICommand
+};
+var robotlegs_bender_bundles_mvcs_Command = function() { };
+$hxClasses["robotlegs.bender.bundles.mvcs.Command"] = robotlegs_bender_bundles_mvcs_Command;
+robotlegs_bender_bundles_mvcs_Command.__name__ = ["robotlegs","bender","bundles","mvcs","Command"];
+robotlegs_bender_bundles_mvcs_Command.__interfaces__ = [robotlegs_bender_extensions_commandCenter_api_ICommand];
+robotlegs_bender_bundles_mvcs_Command.prototype = {
+	execute: function() {
+	}
+	,__class__: robotlegs_bender_bundles_mvcs_Command
+};
+var com_cesar_commands_ShapeActionCommand = function() {
+};
+$hxClasses["com.cesar.commands.ShapeActionCommand"] = com_cesar_commands_ShapeActionCommand;
+com_cesar_commands_ShapeActionCommand.__name__ = ["com","cesar","commands","ShapeActionCommand"];
+com_cesar_commands_ShapeActionCommand.__super__ = robotlegs_bender_bundles_mvcs_Command;
+com_cesar_commands_ShapeActionCommand.prototype = $extend(robotlegs_bender_bundles_mvcs_Command.prototype,{
+	tetrisBoardModel: null
+	,shapeAction: null
+	,execute: function() {
+		if(this.tetrisBoardModel.get_CurrentShape() == null) {
+			var shape = com_cesar_models_business_factories_ShapeFactory.CreateNewRandomShape();
+			if(shape != null) this.tetrisBoardModel.set_CurrentShape(shape);
+		} else {
+			var actionMove = com_cesar_models_business_factories_ActionShapeFactory.CreateShapeActionMove(this.shapeAction,this.tetrisBoardModel);
+			actionMove.moveShape();
+		}
+	}
+	,__class__: com_cesar_commands_ShapeActionCommand
+});
+var msignal_Signal = function(valueClasses) {
+	if(valueClasses == null) valueClasses = [];
+	this.valueClasses = valueClasses;
+	this.slots = msignal_SlotList.NIL;
+	this.priorityBased = false;
+};
+$hxClasses["msignal.Signal"] = msignal_Signal;
+msignal_Signal.__name__ = ["msignal","Signal"];
+msignal_Signal.prototype = {
+	valueClasses: null
+	,numListeners: null
+	,slots: null
+	,priorityBased: null
+	,add: function(listener) {
+		return this.registerListener(listener);
+	}
+	,addOnce: function(listener) {
+		return this.registerListener(listener,true);
+	}
+	,addWithPriority: function(listener,priority) {
+		if(priority == null) priority = 0;
+		return this.registerListener(listener,false,priority);
+	}
+	,addOnceWithPriority: function(listener,priority) {
+		if(priority == null) priority = 0;
+		return this.registerListener(listener,true,priority);
+	}
+	,remove: function(listener) {
+		var slot = this.slots.find(listener);
+		if(slot == null) return null;
+		this.slots = this.slots.filterNot(listener);
+		return slot;
+	}
+	,removeAll: function() {
+		this.slots = msignal_SlotList.NIL;
+	}
+	,registerListener: function(listener,once,priority) {
+		if(priority == null) priority = 0;
+		if(once == null) once = false;
+		if(this.registrationPossible(listener,once)) {
+			var newSlot = this.createSlot(listener,once,priority);
+			if(!this.priorityBased && priority != 0) this.priorityBased = true;
+			if(!this.priorityBased && priority == 0) this.slots = this.slots.prepend(newSlot); else this.slots = this.slots.insertWithPriority(newSlot);
+			return newSlot;
+		}
+		return this.slots.find(listener);
+	}
+	,registrationPossible: function(listener,once) {
+		if(!this.slots.nonEmpty) return true;
+		var existingSlot = this.slots.find(listener);
+		if(existingSlot == null) return true;
+		return false;
+	}
+	,createSlot: function(listener,once,priority) {
+		if(priority == null) priority = 0;
+		if(once == null) once = false;
+		return null;
+	}
+	,get_numListeners: function() {
+		return this.slots.get_length();
+	}
+	,__class__: msignal_Signal
+	,__properties__: {get_numListeners:"get_numListeners"}
+};
+var msignal_Signal1 = function(type) {
+	msignal_Signal.call(this,[type]);
+};
+$hxClasses["msignal.Signal1"] = msignal_Signal1;
+msignal_Signal1.__name__ = ["msignal","Signal1"];
+msignal_Signal1.__super__ = msignal_Signal;
+msignal_Signal1.prototype = $extend(msignal_Signal.prototype,{
+	dispatch: function(value) {
+		var slotsToProcess = this.slots;
+		while(slotsToProcess.nonEmpty) {
+			slotsToProcess.head.execute(value);
+			slotsToProcess = slotsToProcess.tail;
+		}
+	}
+	,createSlot: function(listener,once,priority) {
+		if(priority == null) priority = 0;
+		if(once == null) once = false;
+		return new msignal_Slot1(this,listener,once,priority);
+	}
+	,__class__: msignal_Signal1
+});
+var com_cesar_commands_signals_ShapeActionSignal = function() {
+	msignal_Signal1.call(this,com_cesar_utils_enums_ShapeAction);
+};
+$hxClasses["com.cesar.commands.signals.ShapeActionSignal"] = com_cesar_commands_signals_ShapeActionSignal;
+com_cesar_commands_signals_ShapeActionSignal.__name__ = ["com","cesar","commands","signals","ShapeActionSignal"];
+com_cesar_commands_signals_ShapeActionSignal.__super__ = msignal_Signal1;
+com_cesar_commands_signals_ShapeActionSignal.prototype = $extend(msignal_Signal1.prototype,{
+	__class__: com_cesar_commands_signals_ShapeActionSignal
+});
 var com_cesar_models_ModelConfig = function() {
 };
 $hxClasses["com.cesar.models.ModelConfig"] = com_cesar_models_ModelConfig;
 com_cesar_models_ModelConfig.__name__ = ["com","cesar","models","ModelConfig"];
 com_cesar_models_ModelConfig.__interfaces__ = [robotlegs_bender_framework_api_IConfig];
 com_cesar_models_ModelConfig.prototype = {
-	configure: function() {
+	injector: null
+	,configure: function() {
+		this.injector.map(com_cesar_models_board_TetrisBoardModel).asSingleton();
+		this.injector.map(com_cesar_models_signals_ShapeUpdatedSignal).asSingleton();
 	}
 	,__class__: com_cesar_models_ModelConfig
 };
-var com_cesar_services_ServiceConfig = function() {
+var com_cesar_models_board_TetrisBoardModel = function() {
+	this.landedShapes = [];
+	this.initBoard();
 };
-$hxClasses["com.cesar.services.ServiceConfig"] = com_cesar_services_ServiceConfig;
-com_cesar_services_ServiceConfig.__name__ = ["com","cesar","services","ServiceConfig"];
-com_cesar_services_ServiceConfig.__interfaces__ = [robotlegs_bender_framework_api_IConfig];
-com_cesar_services_ServiceConfig.prototype = {
-	configure: function() {
+$hxClasses["com.cesar.models.board.TetrisBoardModel"] = com_cesar_models_board_TetrisBoardModel;
+com_cesar_models_board_TetrisBoardModel.__name__ = ["com","cesar","models","board","TetrisBoardModel"];
+com_cesar_models_board_TetrisBoardModel.prototype = {
+	board: null
+	,landedShapes: null
+	,currentShape: null
+	,shapeUpdateSignal: null
+	,get_LandedShapes: function() {
+		return this.landedShapes;
 	}
-	,__class__: com_cesar_services_ServiceConfig
+	,set_LandedShapes: function(value) {
+		this.landedShapes = value;
+	}
+	,get_CurrentShape: function() {
+		return this.currentShape;
+	}
+	,set_CurrentShape: function(value) {
+		this.currentShape = value;
+		this.shapeUpdateSignal.dispatch(this);
+	}
+	,get_Board: function() {
+		return this.board;
+	}
+	,landShape: function() {
+		this.landedShapes.push(this.currentShape);
+		this.landShapeInTheBoard(this.currentShape);
+	}
+	,landShapeInTheBoard: function(shape) {
+		var _g = 0;
+		var _g1 = shape.get_Blocks();
+		while(_g < _g1.length) {
+			var block = _g1[_g];
+			++_g;
+			this.board[block.get_XPosition()][block.get_YPosition()] = true;
+		}
+	}
+	,initBoard: function() {
+		this.board = [];
+		var blockSize = 32;
+		var columnQuantity;
+		columnQuantity = js_Boot.__cast(320 / blockSize , Int);
+		var rowQuantity;
+		rowQuantity = js_Boot.__cast(576 / blockSize , Int);
+		var _g = 0;
+		while(_g < columnQuantity) {
+			var i = _g++;
+			var row = [];
+			var _g1 = 0;
+			while(_g1 < rowQuantity) {
+				var j = _g1++;
+				row.push(false);
+			}
+			this.board.push(row);
+		}
+	}
+	,__class__: com_cesar_models_board_TetrisBoardModel
 };
-var com_cesar_utils_Constants = function() {
+var com_cesar_models_business_factories_ActionShapeFactory = function() {
 };
-$hxClasses["com.cesar.utils.Constants"] = com_cesar_utils_Constants;
-com_cesar_utils_Constants.__name__ = ["com","cesar","utils","Constants"];
-com_cesar_utils_Constants.prototype = {
-	__class__: com_cesar_utils_Constants
+$hxClasses["com.cesar.models.business.factories.ActionShapeFactory"] = com_cesar_models_business_factories_ActionShapeFactory;
+com_cesar_models_business_factories_ActionShapeFactory.__name__ = ["com","cesar","models","business","factories","ActionShapeFactory"];
+com_cesar_models_business_factories_ActionShapeFactory.CreateShapeActionMove = function(action,tetrisBoardModel) {
+	switch(action[1]) {
+	case 0:
+		return new com_cesar_models_business_shapeMovements_ShapeMovement(new com_cesar_models_business_shapeMovements_DefaultShapeMove(),tetrisBoardModel);
+	case 1:
+		return new com_cesar_models_business_shapeMovements_ShapeMovement(new com_cesar_models_business_shapeMovements_RotateShapeMove(),tetrisBoardModel);
+	case 2:
+		return new com_cesar_models_business_shapeMovements_ShapeMovement(new com_cesar_models_business_shapeMovements_RightShapeMove(),tetrisBoardModel);
+	case 4:
+		return new com_cesar_models_business_shapeMovements_ShapeMovement(new com_cesar_models_business_shapeMovements_LeftShapeMove(),tetrisBoardModel);
+	case 3:
+		return new com_cesar_models_business_shapeMovements_ShapeMovement(new com_cesar_models_business_shapeMovements_DefaultShapeMove(),tetrisBoardModel);
+	}
 };
+com_cesar_models_business_factories_ActionShapeFactory.prototype = {
+	__class__: com_cesar_models_business_factories_ActionShapeFactory
+};
+var com_cesar_models_shapes_enums_ShapeType = $hxClasses["com.cesar.models.shapes.enums.ShapeType"] = { __ename__ : true, __constructs__ : ["Square","L","T","I","S"] };
+com_cesar_models_shapes_enums_ShapeType.Square = ["Square",0];
+com_cesar_models_shapes_enums_ShapeType.Square.toString = $estr;
+com_cesar_models_shapes_enums_ShapeType.Square.__enum__ = com_cesar_models_shapes_enums_ShapeType;
+com_cesar_models_shapes_enums_ShapeType.L = ["L",1];
+com_cesar_models_shapes_enums_ShapeType.L.toString = $estr;
+com_cesar_models_shapes_enums_ShapeType.L.__enum__ = com_cesar_models_shapes_enums_ShapeType;
+com_cesar_models_shapes_enums_ShapeType.T = ["T",2];
+com_cesar_models_shapes_enums_ShapeType.T.toString = $estr;
+com_cesar_models_shapes_enums_ShapeType.T.__enum__ = com_cesar_models_shapes_enums_ShapeType;
+com_cesar_models_shapes_enums_ShapeType.I = ["I",3];
+com_cesar_models_shapes_enums_ShapeType.I.toString = $estr;
+com_cesar_models_shapes_enums_ShapeType.I.__enum__ = com_cesar_models_shapes_enums_ShapeType;
+com_cesar_models_shapes_enums_ShapeType.S = ["S",4];
+com_cesar_models_shapes_enums_ShapeType.S.toString = $estr;
+com_cesar_models_shapes_enums_ShapeType.S.__enum__ = com_cesar_models_shapes_enums_ShapeType;
+var com_cesar_models_business_factories_ShapeFactory = function() {
+};
+$hxClasses["com.cesar.models.business.factories.ShapeFactory"] = com_cesar_models_business_factories_ShapeFactory;
+com_cesar_models_business_factories_ShapeFactory.__name__ = ["com","cesar","models","business","factories","ShapeFactory"];
+com_cesar_models_business_factories_ShapeFactory.CreateNewRandomShape = function() {
+	var shapeType = com_cesar_models_business_factories_ShapeFactory.getRandomShapeType();
+	var initialXPosition = 2;
+	var initialYPosition = 0;
+	switch(shapeType[1]) {
+	case 0:
+		return new com_cesar_models_shapes_SquareShape(initialXPosition,initialYPosition);
+	case 1:
+		return new com_cesar_models_shapes_LShape(initialXPosition,initialYPosition);
+	case 4:
+		return new com_cesar_models_shapes_SShape(initialXPosition,initialYPosition);
+	case 2:
+		return new com_cesar_models_shapes_TShape(initialXPosition,initialYPosition);
+	case 3:
+		return new com_cesar_models_shapes_IShape(initialXPosition,initialYPosition);
+	}
+};
+com_cesar_models_business_factories_ShapeFactory.cloneShape = function(shape) {
+	var clonedShape = null;
+	if(shape != null) {
+		var xPosition = ((function($this) {
+			var $r;
+			var this1 = shape.get_Blocks();
+			$r = this1[0];
+			return $r;
+		}(this))).get_XPosition();
+		var yPosition = ((function($this) {
+			var $r;
+			var this2 = shape.get_Blocks();
+			$r = this2[0];
+			return $r;
+		}(this))).get_YPosition();
+		if(js_Boot.__instanceof(shape,com_cesar_models_shapes_SquareShape)) clonedShape = new com_cesar_models_shapes_SquareShape(xPosition,yPosition); else if(js_Boot.__instanceof(shape,com_cesar_models_shapes_LShape)) clonedShape = new com_cesar_models_shapes_LShape(xPosition,yPosition); else if(js_Boot.__instanceof(shape,com_cesar_models_shapes_SShape)) clonedShape = new com_cesar_models_shapes_SShape(xPosition,yPosition); else if(js_Boot.__instanceof(shape,com_cesar_models_shapes_TShape)) clonedShape = new com_cesar_models_shapes_TShape(xPosition,yPosition); else if(js_Boot.__instanceof(shape,com_cesar_models_shapes_IShape)) clonedShape = new com_cesar_models_shapes_IShape(xPosition,yPosition);
+	}
+	return clonedShape;
+};
+com_cesar_models_business_factories_ShapeFactory.getRandomShapeType = function() {
+	var radomNumber = Std.random(5);
+	var selectedType = com_cesar_models_business_factories_ShapeFactory.shapeList[radomNumber];
+	return selectedType;
+};
+com_cesar_models_business_factories_ShapeFactory.prototype = {
+	__class__: com_cesar_models_business_factories_ShapeFactory
+};
+var com_cesar_models_business_shapeMovements_IShapeMove = function() { };
+$hxClasses["com.cesar.models.business.shapeMovements.IShapeMove"] = com_cesar_models_business_shapeMovements_IShapeMove;
+com_cesar_models_business_shapeMovements_IShapeMove.__name__ = ["com","cesar","models","business","shapeMovements","IShapeMove"];
+com_cesar_models_business_shapeMovements_IShapeMove.prototype = {
+	move: null
+	,shapeReachedBoardLimits: null
+	,__class__: com_cesar_models_business_shapeMovements_IShapeMove
+};
+var com_cesar_models_business_shapeMovements_DefaultShapeMove = function() {
+};
+$hxClasses["com.cesar.models.business.shapeMovements.DefaultShapeMove"] = com_cesar_models_business_shapeMovements_DefaultShapeMove;
+com_cesar_models_business_shapeMovements_DefaultShapeMove.__name__ = ["com","cesar","models","business","shapeMovements","DefaultShapeMove"];
+com_cesar_models_business_shapeMovements_DefaultShapeMove.__interfaces__ = [com_cesar_models_business_shapeMovements_IShapeMove];
+com_cesar_models_business_shapeMovements_DefaultShapeMove.prototype = {
+	move: function(shape) {
+		var _g1 = 0;
+		var _g;
+		var this1 = shape.get_Blocks();
+		_g = this1.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var _g2;
+			var this2 = shape.get_Blocks();
+			_g2 = this2[i];
+			var _g3 = _g2.get_YPosition();
+			_g2.set_YPosition(_g3 + 1);
+			_g3;
+		}
+	}
+	,shapeReachedBoardLimits: function(shape) {
+		var shapeReachedLimit = false;
+		var maxHeight;
+		maxHeight = js_Boot.__cast(18. , Int);
+		var _g1 = 0;
+		var _g;
+		var this1 = shape.get_Blocks();
+		_g = this1.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			if(((function($this) {
+				var $r;
+				var this2 = shape.get_Blocks();
+				$r = this2[i];
+				return $r;
+			}(this))).get_YPosition() >= maxHeight) {
+				shapeReachedLimit = true;
+				break;
+			}
+		}
+		return shapeReachedLimit;
+	}
+	,__class__: com_cesar_models_business_shapeMovements_DefaultShapeMove
+};
+var com_cesar_models_business_shapeMovements_LeftShapeMove = function() {
+};
+$hxClasses["com.cesar.models.business.shapeMovements.LeftShapeMove"] = com_cesar_models_business_shapeMovements_LeftShapeMove;
+com_cesar_models_business_shapeMovements_LeftShapeMove.__name__ = ["com","cesar","models","business","shapeMovements","LeftShapeMove"];
+com_cesar_models_business_shapeMovements_LeftShapeMove.__interfaces__ = [com_cesar_models_business_shapeMovements_IShapeMove];
+com_cesar_models_business_shapeMovements_LeftShapeMove.prototype = {
+	move: function(shape) {
+		var _g1 = 0;
+		var _g;
+		var this1 = shape.get_Blocks();
+		_g = this1.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var _g2;
+			var this2 = shape.get_Blocks();
+			_g2 = this2[i];
+			var _g3 = _g2.get_XPosition();
+			_g2.set_XPosition(_g3 - 1);
+			_g3;
+		}
+	}
+	,shapeReachedBoardLimits: function(shape) {
+		var shapeReachedLeftLimit = false;
+		var _g1 = 0;
+		var _g;
+		var this1 = shape.get_Blocks();
+		_g = this1.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			if(((function($this) {
+				var $r;
+				var this2 = shape.get_Blocks();
+				$r = this2[i];
+				return $r;
+			}(this))).get_XPosition() <= 0) {
+				shapeReachedLeftLimit = true;
+				break;
+			}
+		}
+		return shapeReachedLeftLimit;
+	}
+	,__class__: com_cesar_models_business_shapeMovements_LeftShapeMove
+};
+var com_cesar_models_business_shapeMovements_RightShapeMove = function() {
+};
+$hxClasses["com.cesar.models.business.shapeMovements.RightShapeMove"] = com_cesar_models_business_shapeMovements_RightShapeMove;
+com_cesar_models_business_shapeMovements_RightShapeMove.__name__ = ["com","cesar","models","business","shapeMovements","RightShapeMove"];
+com_cesar_models_business_shapeMovements_RightShapeMove.__interfaces__ = [com_cesar_models_business_shapeMovements_IShapeMove];
+com_cesar_models_business_shapeMovements_RightShapeMove.prototype = {
+	move: function(shape) {
+		var _g1 = 0;
+		var _g;
+		var this1 = shape.get_Blocks();
+		_g = this1.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var _g2;
+			var this2 = shape.get_Blocks();
+			_g2 = this2[i];
+			var _g3 = _g2.get_XPosition();
+			_g2.set_XPosition(_g3 + 1);
+			_g3;
+		}
+	}
+	,shapeReachedBoardLimits: function(shape) {
+		var shapeReachedRightLimit = false;
+		var maxWidth;
+		maxWidth = js_Boot.__cast(10. , Int);
+		var _g1 = 0;
+		var _g;
+		var this1 = shape.get_Blocks();
+		_g = this1.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			if(((function($this) {
+				var $r;
+				var this2 = shape.get_Blocks();
+				$r = this2[i];
+				return $r;
+			}(this))).get_XPosition() >= maxWidth) {
+				shapeReachedRightLimit = true;
+				break;
+			}
+		}
+		return shapeReachedRightLimit;
+	}
+	,__class__: com_cesar_models_business_shapeMovements_RightShapeMove
+};
+var com_cesar_models_business_shapeMovements_RotateShapeMove = function() {
+};
+$hxClasses["com.cesar.models.business.shapeMovements.RotateShapeMove"] = com_cesar_models_business_shapeMovements_RotateShapeMove;
+com_cesar_models_business_shapeMovements_RotateShapeMove.__name__ = ["com","cesar","models","business","shapeMovements","RotateShapeMove"];
+com_cesar_models_business_shapeMovements_RotateShapeMove.__interfaces__ = [com_cesar_models_business_shapeMovements_IShapeMove];
+com_cesar_models_business_shapeMovements_RotateShapeMove.prototype = {
+	move: function(shape) {
+	}
+	,shapeReachedBoardLimits: function(shape) {
+		return false;
+	}
+	,__class__: com_cesar_models_business_shapeMovements_RotateShapeMove
+};
+var com_cesar_models_business_shapeMovements_ShapeMovement = function(iShapeMove,tetrisBoardModel) {
+	this.iShapeMove = iShapeMove;
+	this.boardModel = tetrisBoardModel;
+};
+$hxClasses["com.cesar.models.business.shapeMovements.ShapeMovement"] = com_cesar_models_business_shapeMovements_ShapeMovement;
+com_cesar_models_business_shapeMovements_ShapeMovement.__name__ = ["com","cesar","models","business","shapeMovements","ShapeMovement"];
+com_cesar_models_business_shapeMovements_ShapeMovement.prototype = {
+	boardModel: null
+	,iShapeMove: null
+	,moveShape: function() {
+		var clonedShape = com_cesar_models_business_factories_ShapeFactory.cloneShape(this.boardModel.get_CurrentShape());
+		this.iShapeMove.move(clonedShape);
+		if(!this.iShapeMove.shapeReachedBoardLimits(clonedShape) && !this.shapeCollided(clonedShape)) this.boardModel.set_CurrentShape(clonedShape); else if(js_Boot.__instanceof(this.iShapeMove,com_cesar_models_business_shapeMovements_DefaultShapeMove)) {
+			this.boardModel.landShape();
+			this.boardModel.set_CurrentShape(null);
+		} else {
+			var baseShapeMove = new com_cesar_models_business_shapeMovements_ShapeMovement(new com_cesar_models_business_shapeMovements_DefaultShapeMove(),this.boardModel);
+			baseShapeMove.moveShape();
+		}
+	}
+	,shapeCollided: function(shape) {
+		var collided = false;
+		var boardPosition = this.boardModel.get_Board();
+		var _g1 = 0;
+		var _g;
+		var this1 = shape.get_Blocks();
+		_g = this1.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var blockXPos = ((function($this) {
+				var $r;
+				var this2 = shape.get_Blocks();
+				$r = this2[i];
+				return $r;
+			}(this))).get_XPosition();
+			var blockYPos = ((function($this) {
+				var $r;
+				var this3 = shape.get_Blocks();
+				$r = this3[i];
+				return $r;
+			}(this))).get_YPosition();
+			var blockPositionIsFilled = boardPosition[blockXPos][blockYPos];
+			if(blockPositionIsFilled) {
+				collided = true;
+				break;
+			}
+		}
+		return collided;
+	}
+	,__class__: com_cesar_models_business_shapeMovements_ShapeMovement
+};
+var com_cesar_models_shapes_BaseShape = function() {
+	this.set_Blocks((function($this) {
+		var $r;
+		var this1;
+		this1 = new Array(4);
+		$r = this1;
+		return $r;
+	}(this)));
+};
+$hxClasses["com.cesar.models.shapes.BaseShape"] = com_cesar_models_shapes_BaseShape;
+com_cesar_models_shapes_BaseShape.__name__ = ["com","cesar","models","shapes","BaseShape"];
+com_cesar_models_shapes_BaseShape.prototype = {
+	Blocks: null
+	,get_Blocks: function() {
+		return this.Blocks;
+	}
+	,set_Blocks: function(value) {
+		return this.Blocks = value;
+	}
+	,__class__: com_cesar_models_shapes_BaseShape
+	,__properties__: {set_Blocks:"set_Blocks",get_Blocks:"get_Blocks"}
+};
+var com_cesar_models_shapes_Block = function(x,y) {
+	this.set_XPosition(x);
+	this.set_YPosition(y);
+};
+$hxClasses["com.cesar.models.shapes.Block"] = com_cesar_models_shapes_Block;
+com_cesar_models_shapes_Block.__name__ = ["com","cesar","models","shapes","Block"];
+com_cesar_models_shapes_Block.prototype = {
+	XPosition: null
+	,YPosition: null
+	,get_XPosition: function() {
+		return this.XPosition;
+	}
+	,set_XPosition: function(value) {
+		return this.XPosition = value;
+	}
+	,get_YPosition: function() {
+		return this.YPosition;
+	}
+	,set_YPosition: function(value) {
+		return this.YPosition = value;
+	}
+	,__class__: com_cesar_models_shapes_Block
+	,__properties__: {set_YPosition:"set_YPosition",get_YPosition:"get_YPosition",set_XPosition:"set_XPosition",get_XPosition:"get_XPosition"}
+};
+var com_cesar_models_shapes_IShape = function(x,y) {
+	com_cesar_models_shapes_BaseShape.call(this);
+	var this1 = this.get_Blocks();
+	var val = new com_cesar_models_shapes_Block(x,y);
+	this1[0] = val;
+	var this2 = this.get_Blocks();
+	var val1 = new com_cesar_models_shapes_Block(x,y + 1);
+	this2[1] = val1;
+	var this3 = this.get_Blocks();
+	var val2 = new com_cesar_models_shapes_Block(x,y + 2);
+	this3[2] = val2;
+	var this4 = this.get_Blocks();
+	var val3 = new com_cesar_models_shapes_Block(x,y + 3);
+	this4[3] = val3;
+};
+$hxClasses["com.cesar.models.shapes.IShape"] = com_cesar_models_shapes_IShape;
+com_cesar_models_shapes_IShape.__name__ = ["com","cesar","models","shapes","IShape"];
+com_cesar_models_shapes_IShape.__super__ = com_cesar_models_shapes_BaseShape;
+com_cesar_models_shapes_IShape.prototype = $extend(com_cesar_models_shapes_BaseShape.prototype,{
+	__class__: com_cesar_models_shapes_IShape
+});
+var com_cesar_models_shapes_LShape = function(x,y) {
+	com_cesar_models_shapes_BaseShape.call(this);
+	var this1 = this.get_Blocks();
+	var val = new com_cesar_models_shapes_Block(x,y);
+	this1[0] = val;
+	var this2 = this.get_Blocks();
+	var val1 = new com_cesar_models_shapes_Block(x,y + 1);
+	this2[1] = val1;
+	var this3 = this.get_Blocks();
+	var val2 = new com_cesar_models_shapes_Block(x,y + 2);
+	this3[2] = val2;
+	var this4 = this.get_Blocks();
+	var val3 = new com_cesar_models_shapes_Block(x + 1,y + 2);
+	this4[3] = val3;
+};
+$hxClasses["com.cesar.models.shapes.LShape"] = com_cesar_models_shapes_LShape;
+com_cesar_models_shapes_LShape.__name__ = ["com","cesar","models","shapes","LShape"];
+com_cesar_models_shapes_LShape.__super__ = com_cesar_models_shapes_BaseShape;
+com_cesar_models_shapes_LShape.prototype = $extend(com_cesar_models_shapes_BaseShape.prototype,{
+	__class__: com_cesar_models_shapes_LShape
+});
+var com_cesar_models_shapes_SShape = function(x,y) {
+	com_cesar_models_shapes_BaseShape.call(this);
+	var this1 = this.get_Blocks();
+	var val = new com_cesar_models_shapes_Block(x,y);
+	this1[0] = val;
+	var this2 = this.get_Blocks();
+	var val1 = new com_cesar_models_shapes_Block(x + 1,y);
+	this2[1] = val1;
+	var this3 = this.get_Blocks();
+	var val2 = new com_cesar_models_shapes_Block(x - 1,y + 1);
+	this3[2] = val2;
+	var this4 = this.get_Blocks();
+	var val3 = new com_cesar_models_shapes_Block(x,y + 1);
+	this4[3] = val3;
+};
+$hxClasses["com.cesar.models.shapes.SShape"] = com_cesar_models_shapes_SShape;
+com_cesar_models_shapes_SShape.__name__ = ["com","cesar","models","shapes","SShape"];
+com_cesar_models_shapes_SShape.__super__ = com_cesar_models_shapes_BaseShape;
+com_cesar_models_shapes_SShape.prototype = $extend(com_cesar_models_shapes_BaseShape.prototype,{
+	__class__: com_cesar_models_shapes_SShape
+});
+var com_cesar_models_shapes_SquareShape = function(x,y) {
+	com_cesar_models_shapes_BaseShape.call(this);
+	var this1 = this.get_Blocks();
+	var val = new com_cesar_models_shapes_Block(x,y);
+	this1[0] = val;
+	var this2 = this.get_Blocks();
+	var val1 = new com_cesar_models_shapes_Block(x + 1,y);
+	this2[1] = val1;
+	var this3 = this.get_Blocks();
+	var val2 = new com_cesar_models_shapes_Block(x,y + 1);
+	this3[2] = val2;
+	var this4 = this.get_Blocks();
+	var val3 = new com_cesar_models_shapes_Block(x + 1,y + 1);
+	this4[3] = val3;
+};
+$hxClasses["com.cesar.models.shapes.SquareShape"] = com_cesar_models_shapes_SquareShape;
+com_cesar_models_shapes_SquareShape.__name__ = ["com","cesar","models","shapes","SquareShape"];
+com_cesar_models_shapes_SquareShape.__super__ = com_cesar_models_shapes_BaseShape;
+com_cesar_models_shapes_SquareShape.prototype = $extend(com_cesar_models_shapes_BaseShape.prototype,{
+	__class__: com_cesar_models_shapes_SquareShape
+});
+var com_cesar_models_shapes_TShape = function(x,y) {
+	com_cesar_models_shapes_BaseShape.call(this);
+	var this1 = this.get_Blocks();
+	var val = new com_cesar_models_shapes_Block(x,y);
+	this1[0] = val;
+	var this2 = this.get_Blocks();
+	var val1 = new com_cesar_models_shapes_Block(x + 1,y);
+	this2[1] = val1;
+	var this3 = this.get_Blocks();
+	var val2 = new com_cesar_models_shapes_Block(x + 2,y);
+	this3[2] = val2;
+	var this4 = this.get_Blocks();
+	var val3 = new com_cesar_models_shapes_Block(x + 1,y + 1);
+	this4[3] = val3;
+};
+$hxClasses["com.cesar.models.shapes.TShape"] = com_cesar_models_shapes_TShape;
+com_cesar_models_shapes_TShape.__name__ = ["com","cesar","models","shapes","TShape"];
+com_cesar_models_shapes_TShape.__super__ = com_cesar_models_shapes_BaseShape;
+com_cesar_models_shapes_TShape.prototype = $extend(com_cesar_models_shapes_BaseShape.prototype,{
+	__class__: com_cesar_models_shapes_TShape
+});
+var com_cesar_models_signals_ShapeUpdatedSignal = function() {
+	msignal_Signal1.call(this,com_cesar_models_board_TetrisBoardModel);
+};
+$hxClasses["com.cesar.models.signals.ShapeUpdatedSignal"] = com_cesar_models_signals_ShapeUpdatedSignal;
+com_cesar_models_signals_ShapeUpdatedSignal.__name__ = ["com","cesar","models","signals","ShapeUpdatedSignal"];
+com_cesar_models_signals_ShapeUpdatedSignal.__super__ = msignal_Signal1;
+com_cesar_models_signals_ShapeUpdatedSignal.prototype = $extend(msignal_Signal1.prototype,{
+	__class__: com_cesar_models_signals_ShapeUpdatedSignal
+});
+var com_cesar_utils_constants_KeyBoardCodeConstants = function() { };
+$hxClasses["com.cesar.utils.constants.KeyBoardCodeConstants"] = com_cesar_utils_constants_KeyBoardCodeConstants;
+com_cesar_utils_constants_KeyBoardCodeConstants.__name__ = ["com","cesar","utils","constants","KeyBoardCodeConstants"];
+var com_cesar_utils_constants_SizeConstants = function() {
+};
+$hxClasses["com.cesar.utils.constants.SizeConstants"] = com_cesar_utils_constants_SizeConstants;
+com_cesar_utils_constants_SizeConstants.__name__ = ["com","cesar","utils","constants","SizeConstants"];
+com_cesar_utils_constants_SizeConstants.prototype = {
+	__class__: com_cesar_utils_constants_SizeConstants
+};
+var com_cesar_utils_enums_GameState = $hxClasses["com.cesar.utils.enums.GameState"] = { __ename__ : true, __constructs__ : ["Paused","Playing"] };
+com_cesar_utils_enums_GameState.Paused = ["Paused",0];
+com_cesar_utils_enums_GameState.Paused.toString = $estr;
+com_cesar_utils_enums_GameState.Paused.__enum__ = com_cesar_utils_enums_GameState;
+com_cesar_utils_enums_GameState.Playing = ["Playing",1];
+com_cesar_utils_enums_GameState.Playing.toString = $estr;
+com_cesar_utils_enums_GameState.Playing.__enum__ = com_cesar_utils_enums_GameState;
+var com_cesar_utils_enums_ShapeAction = $hxClasses["com.cesar.utils.enums.ShapeAction"] = { __ename__ : true, __constructs__ : ["DefaultMove","RotateMove","RightMove","DownMove","LeftMove"] };
+com_cesar_utils_enums_ShapeAction.DefaultMove = ["DefaultMove",0];
+com_cesar_utils_enums_ShapeAction.DefaultMove.toString = $estr;
+com_cesar_utils_enums_ShapeAction.DefaultMove.__enum__ = com_cesar_utils_enums_ShapeAction;
+com_cesar_utils_enums_ShapeAction.RotateMove = ["RotateMove",1];
+com_cesar_utils_enums_ShapeAction.RotateMove.toString = $estr;
+com_cesar_utils_enums_ShapeAction.RotateMove.__enum__ = com_cesar_utils_enums_ShapeAction;
+com_cesar_utils_enums_ShapeAction.RightMove = ["RightMove",2];
+com_cesar_utils_enums_ShapeAction.RightMove.toString = $estr;
+com_cesar_utils_enums_ShapeAction.RightMove.__enum__ = com_cesar_utils_enums_ShapeAction;
+com_cesar_utils_enums_ShapeAction.DownMove = ["DownMove",3];
+com_cesar_utils_enums_ShapeAction.DownMove.toString = $estr;
+com_cesar_utils_enums_ShapeAction.DownMove.__enum__ = com_cesar_utils_enums_ShapeAction;
+com_cesar_utils_enums_ShapeAction.LeftMove = ["LeftMove",4];
+com_cesar_utils_enums_ShapeAction.LeftMove.toString = $estr;
+com_cesar_utils_enums_ShapeAction.LeftMove.__enum__ = com_cesar_utils_enums_ShapeAction;
 var com_cesar_views_ViewConfig = function() {
 };
 $hxClasses["com.cesar.views.ViewConfig"] = com_cesar_views_ViewConfig;
@@ -2287,11 +2951,38 @@ $hxClasses["com.cesar.views.openfl.MainView"] = com_cesar_views_openfl_MainView;
 com_cesar_views_openfl_MainView.__name__ = ["com","cesar","views","openfl","MainView"];
 com_cesar_views_openfl_MainView.__super__ = openfl_display_Sprite;
 com_cesar_views_openfl_MainView.prototype = $extend(openfl_display_Sprite.prototype,{
-	Initialize: function() {
+	startGameMessage: null
+	,instructionMessage: null
+	,Initialize: function() {
 		var tetrisBoard = new com_cesar_views_openfl_board_TetrisBoardView();
 		tetrisBoard.set_x(10);
 		tetrisBoard.set_y(10);
 		this.addChild(tetrisBoard);
+		this.setInstructionGameText();
+	}
+	,setInstructionGameText: function() {
+		var gameMessageFormatText = new openfl_text_TextFormat("_sans",16,12303291,true);
+		gameMessageFormatText.align = 0;
+		this.startGameMessage = new openfl_text_TextField();
+		this.startGameMessage.set_x(340);
+		this.startGameMessage.set_y(10);
+		this.startGameMessage.set_width(400);
+		this.startGameMessage.set_height(100);
+		this.startGameMessage.set_defaultTextFormat(gameMessageFormatText);
+		this.startGameMessage.set_selectable(false);
+		this.startGameMessage.set_text("CLICK on the screen and PRESS SPACE to START\n\n");
+		this.addChild(this.startGameMessage);
+		var instructionFormatText = new openfl_text_TextFormat("_sans",16,12303291,true);
+		instructionFormatText.align = 3;
+		this.instructionMessage = new openfl_text_TextField();
+		this.instructionMessage.set_x(this.startGameMessage.get_x());
+		this.instructionMessage.set_y(this.startGameMessage.get_y() + 30);
+		this.instructionMessage.set_width(170);
+		this.instructionMessage.set_height(300);
+		this.instructionMessage.set_defaultTextFormat(instructionFormatText);
+		this.instructionMessage.set_selectable(false);
+		this.instructionMessage.set_text("▲ - Rotate clockwise\n► - Move right\n▼ - Down one unit\n◄ - Move left");
+		this.addChild(this.instructionMessage);
 	}
 	,__class__: com_cesar_views_openfl_MainView
 });
@@ -2350,32 +3041,159 @@ com_cesar_views_openfl_MainViewMediator.prototype = $extend(robotlegs_bender_bun
 	,__class__: com_cesar_views_openfl_MainViewMediator
 });
 var com_cesar_views_openfl_board_TetrisBoardView = function() {
+	this.move_down_action_signal = new msignal_Signal0();
+	this.move_right_action_signal = new msignal_Signal0();
+	this.move_left_action_signal = new msignal_Signal0();
+	this.rotate_action_signal = new msignal_Signal0();
+	this.default_action_signal = new msignal_Signal0();
+	this.arrowRightPressed = false;
+	this.arrowLeftPressed = false;
+	this.arrowDownPressed = false;
+	this.arrowUpPressed = false;
 	openfl_display_Sprite.call(this);
 };
 $hxClasses["com.cesar.views.openfl.board.TetrisBoardView"] = com_cesar_views_openfl_board_TetrisBoardView;
 com_cesar_views_openfl_board_TetrisBoardView.__name__ = ["com","cesar","views","openfl","board","TetrisBoardView"];
 com_cesar_views_openfl_board_TetrisBoardView.__super__ = openfl_display_Sprite;
 com_cesar_views_openfl_board_TetrisBoardView.prototype = $extend(openfl_display_Sprite.prototype,{
-	Initialize: function() {
-		this.createEmptyTetrisBoard();
+	currentGameState: null
+	,arrowUpPressed: null
+	,arrowDownPressed: null
+	,arrowLeftPressed: null
+	,arrowRightPressed: null
+	,default_action_signal: null
+	,rotate_action_signal: null
+	,move_left_action_signal: null
+	,move_right_action_signal: null
+	,move_down_action_signal: null
+	,blockSize: null
+	,columnQuantity: null
+	,rowQuantity: null
+	,Initialize: function() {
+		this.setSizeVariables();
+		this.createGrid();
+		this.setGameState(com_cesar_utils_enums_GameState.Paused);
+		this.stage.addEventListener("keyDown",$bind(this,this.onKeyDownHandler));
+		this.addEventListener("enterFrame",$bind(this,this.everyFrame));
 	}
-	,createEmptyTetrisBoard: function() {
-		var blockSize = 32;
-		var columnQuantity;
-		columnQuantity = js_Boot.__cast(320 / blockSize , Int);
-		var rowQuantity;
-		rowQuantity = js_Boot.__cast(576 / blockSize , Int);
-		this.get_graphics().beginFill(0);
-		var _g = 0;
-		while(_g < columnQuantity) {
-			var i = _g++;
-			var _g1 = 0;
-			while(_g1 < rowQuantity) {
-				var j = _g1++;
-				this.get_graphics().drawRect(i * blockSize,j * blockSize,blockSize,blockSize);
+	,UpdateBoardState: function(tetrisBoard) {
+		this.cleanBoard();
+		this.paintBoardWithUpdatedModel(tetrisBoard);
+	}
+	,cleanBoard: function() {
+		this.get_graphics().beginFill(16777215);
+		var _g1 = 0;
+		var _g = this.columnQuantity;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var _g3 = 0;
+			var _g2 = this.rowQuantity;
+			while(_g3 < _g2) {
+				var j = _g3++;
+				this.get_graphics().drawRect(i * this.blockSize,j * this.blockSize,this.blockSize,this.blockSize);
 			}
 		}
 		this.get_graphics().endFill();
+	}
+	,paintBoardWithUpdatedModel: function(tetrisBoard) {
+		var currentShape = tetrisBoard.get_CurrentShape();
+		if(currentShape != null) {
+			this.get_graphics().beginFill(11674146);
+			var _g1 = 0;
+			var _g;
+			var this1 = currentShape.get_Blocks();
+			_g = this1.length;
+			while(_g1 < _g) {
+				var i = _g1++;
+				var xP = ((function($this) {
+					var $r;
+					var this2 = currentShape.get_Blocks();
+					$r = this2[i];
+					return $r;
+				}(this))).get_XPosition();
+				var yP = ((function($this) {
+					var $r;
+					var this3 = currentShape.get_Blocks();
+					$r = this3[i];
+					return $r;
+				}(this))).get_YPosition();
+				this.get_graphics().drawRect(xP * this.blockSize,yP * this.blockSize,this.blockSize,this.blockSize);
+			}
+			this.get_graphics().endFill();
+		}
+		var actualBoard = tetrisBoard.get_Board();
+		this.get_graphics().beginFill(11674146);
+		var _g11 = 0;
+		var _g2 = actualBoard.length;
+		while(_g11 < _g2) {
+			var i1 = _g11++;
+			var _g3 = 0;
+			var _g21 = actualBoard[i1].length;
+			while(_g3 < _g21) {
+				var j = _g3++;
+				if(actualBoard[i1][j]) this.get_graphics().drawRect(i1 * this.blockSize,j * this.blockSize,this.blockSize,this.blockSize);
+			}
+		}
+		this.get_graphics().endFill();
+	}
+	,setSizeVariables: function() {
+		this.blockSize = 32;
+		this.columnQuantity = js_Boot.__cast(320 / this.blockSize , Int);
+		this.rowQuantity = js_Boot.__cast(576 / this.blockSize , Int);
+	}
+	,createGrid: function() {
+		this.get_graphics().lineStyle(1,0);
+		var _g1 = 0;
+		var _g = this.columnQuantity + 1;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var _g3 = 0;
+			var _g2 = this.rowQuantity + 1;
+			while(_g3 < _g2) {
+				var j = _g3++;
+				this.get_graphics().moveTo(i * this.blockSize,0);
+				this.get_graphics().lineTo(i * this.blockSize,this.rowQuantity * this.blockSize);
+				this.get_graphics().moveTo(0,j * this.blockSize);
+				this.get_graphics().lineTo(this.blockSize * this.columnQuantity,this.blockSize * j);
+			}
+		}
+		this.get_graphics().endFill();
+	}
+	,setGameState: function(state) {
+		this.currentGameState = state;
+	}
+	,onKeyDownHandler: function(e) {
+		if(this.currentGameState == com_cesar_utils_enums_GameState.Paused && e.keyCode == 32) this.startGame(); else if(this.currentGameState == com_cesar_utils_enums_GameState.Playing) this.handleArrowsKeyBoard(e);
+	}
+	,startGame: function() {
+		this.setGameState(com_cesar_utils_enums_GameState.Playing);
+	}
+	,handleArrowsKeyBoard: function(e) {
+		if(e.keyCode == 38) this.arrowUpPressed = true; else if(e.keyCode == 39) this.arrowRightPressed = true; else if(e.keyCode == 40) this.arrowDownPressed = true; else if(e.keyCode == 37) this.arrowLeftPressed = true;
+	}
+	,everyFrame: function(event) {
+		if(this.currentGameState == com_cesar_utils_enums_GameState.Playing) {
+			if(this.arrowUpPressed) {
+				haxe_Log.trace("frame up\n",{ fileName : "TetrisBoardView.hx", lineNumber : 184, className : "com.cesar.views.openfl.board.TetrisBoardView", methodName : "everyFrame"});
+				this.arrowUpPressed = false;
+				this.rotate_action_signal.dispatch();
+			} else if(this.arrowRightPressed) {
+				haxe_Log.trace("frame right\n",{ fileName : "TetrisBoardView.hx", lineNumber : 190, className : "com.cesar.views.openfl.board.TetrisBoardView", methodName : "everyFrame"});
+				this.arrowRightPressed = false;
+				this.move_right_action_signal.dispatch();
+			} else if(this.arrowDownPressed) {
+				haxe_Log.trace("frame down\n",{ fileName : "TetrisBoardView.hx", lineNumber : 196, className : "com.cesar.views.openfl.board.TetrisBoardView", methodName : "everyFrame"});
+				this.arrowDownPressed = false;
+				this.move_down_action_signal.dispatch();
+			} else if(this.arrowLeftPressed) {
+				haxe_Log.trace("frame left\n",{ fileName : "TetrisBoardView.hx", lineNumber : 202, className : "com.cesar.views.openfl.board.TetrisBoardView", methodName : "everyFrame"});
+				this.arrowLeftPressed = false;
+				this.move_left_action_signal.dispatch();
+			} else {
+				this.default_action_signal.dispatch();
+				haxe_Log.trace("frame padrão\n",{ fileName : "TetrisBoardView.hx", lineNumber : 209, className : "com.cesar.views.openfl.board.TetrisBoardView", methodName : "everyFrame"});
+			}
+		}
 	}
 	,__class__: com_cesar_views_openfl_board_TetrisBoardView
 });
@@ -2386,8 +3204,34 @@ com_cesar_views_openfl_board_TetrisBoardViewMediator.__name__ = ["com","cesar","
 com_cesar_views_openfl_board_TetrisBoardViewMediator.__super__ = robotlegs_bender_bundles_mvcs_Mediator;
 com_cesar_views_openfl_board_TetrisBoardViewMediator.prototype = $extend(robotlegs_bender_bundles_mvcs_Mediator.prototype,{
 	view: null
+	,signal: null
+	,shapeUpdatedSignal: null
 	,initialize: function() {
 		this.view.Initialize();
+		this.view.default_action_signal.add($bind(this,this.OnDefaultAction));
+		this.view.rotate_action_signal.add($bind(this,this.OnRotateAction));
+		this.view.move_left_action_signal.add($bind(this,this.OnMoveLeftAction));
+		this.view.move_right_action_signal.add($bind(this,this.OnMoveRightAction));
+		this.view.move_down_action_signal.add($bind(this,this.OnMoveDownAction));
+		this.shapeUpdatedSignal.add($bind(this,this.OnUpdateShapeInTheBoard));
+	}
+	,OnDefaultAction: function() {
+		this.signal.dispatch(com_cesar_utils_enums_ShapeAction.DefaultMove);
+	}
+	,OnRotateAction: function() {
+		this.signal.dispatch(com_cesar_utils_enums_ShapeAction.RotateMove);
+	}
+	,OnMoveLeftAction: function() {
+		this.signal.dispatch(com_cesar_utils_enums_ShapeAction.LeftMove);
+	}
+	,OnMoveRightAction: function() {
+		this.signal.dispatch(com_cesar_utils_enums_ShapeAction.RightMove);
+	}
+	,OnMoveDownAction: function() {
+		this.signal.dispatch(com_cesar_utils_enums_ShapeAction.DownMove);
+	}
+	,OnUpdateShapeInTheBoard: function(board) {
+		this.view.UpdateBoardState(board);
 	}
 	,__class__: com_cesar_views_openfl_board_TetrisBoardViewMediator
 });
@@ -16377,70 +17221,6 @@ lime_utils__$UInt8Array_UInt8Array_$Impl_$.toBytes = function(this1) {
 lime_utils__$UInt8Array_UInt8Array_$Impl_$.toString = function(this1) {
 	if(this1 != null) return "UInt8Array [byteLength:" + this1.byteLength + ", length:" + this1.length + "]"; else return null;
 };
-var msignal_Signal = function(valueClasses) {
-	if(valueClasses == null) valueClasses = [];
-	this.valueClasses = valueClasses;
-	this.slots = msignal_SlotList.NIL;
-	this.priorityBased = false;
-};
-$hxClasses["msignal.Signal"] = msignal_Signal;
-msignal_Signal.__name__ = ["msignal","Signal"];
-msignal_Signal.prototype = {
-	valueClasses: null
-	,numListeners: null
-	,slots: null
-	,priorityBased: null
-	,add: function(listener) {
-		return this.registerListener(listener);
-	}
-	,addOnce: function(listener) {
-		return this.registerListener(listener,true);
-	}
-	,addWithPriority: function(listener,priority) {
-		if(priority == null) priority = 0;
-		return this.registerListener(listener,false,priority);
-	}
-	,addOnceWithPriority: function(listener,priority) {
-		if(priority == null) priority = 0;
-		return this.registerListener(listener,true,priority);
-	}
-	,remove: function(listener) {
-		var slot = this.slots.find(listener);
-		if(slot == null) return null;
-		this.slots = this.slots.filterNot(listener);
-		return slot;
-	}
-	,removeAll: function() {
-		this.slots = msignal_SlotList.NIL;
-	}
-	,registerListener: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		if(this.registrationPossible(listener,once)) {
-			var newSlot = this.createSlot(listener,once,priority);
-			if(!this.priorityBased && priority != 0) this.priorityBased = true;
-			if(!this.priorityBased && priority == 0) this.slots = this.slots.prepend(newSlot); else this.slots = this.slots.insertWithPriority(newSlot);
-			return newSlot;
-		}
-		return this.slots.find(listener);
-	}
-	,registrationPossible: function(listener,once) {
-		if(!this.slots.nonEmpty) return true;
-		var existingSlot = this.slots.find(listener);
-		if(existingSlot == null) return true;
-		return false;
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return null;
-	}
-	,get_numListeners: function() {
-		return this.slots.get_length();
-	}
-	,__class__: msignal_Signal
-	,__properties__: {get_numListeners:"get_numListeners"}
-};
 var msignal_Signal0 = function() {
 	msignal_Signal.call(this);
 };
@@ -16461,27 +17241,6 @@ msignal_Signal0.prototype = $extend(msignal_Signal.prototype,{
 		return new msignal_Slot0(this,listener,once,priority);
 	}
 	,__class__: msignal_Signal0
-});
-var msignal_Signal1 = function(type) {
-	msignal_Signal.call(this,[type]);
-};
-$hxClasses["msignal.Signal1"] = msignal_Signal1;
-msignal_Signal1.__name__ = ["msignal","Signal1"];
-msignal_Signal1.__super__ = msignal_Signal;
-msignal_Signal1.prototype = $extend(msignal_Signal.prototype,{
-	dispatch: function(value) {
-		var slotsToProcess = this.slots;
-		while(slotsToProcess.nonEmpty) {
-			slotsToProcess.head.execute(value);
-			slotsToProcess = slotsToProcess.tail;
-		}
-	}
-	,createSlot: function(listener,once,priority) {
-		if(priority == null) priority = 0;
-		if(once == null) once = false;
-		return new msignal_Slot1(this,listener,once,priority);
-	}
-	,__class__: msignal_Signal1
 });
 var msignal_Signal2 = function(type1,type2) {
 	msignal_Signal.call(this,[type1,type2]);
@@ -43838,25 +44597,54 @@ Xml.Comment = 3;
 Xml.DocType = 4;
 Xml.ProcessingInstruction = 5;
 Xml.Document = 6;
-com_cesar_commands_CommandConfig.__rtti = "<class path=\"com.cesar.commands.CommandConfig\" params=\"\">\n\t<implements path=\"robotlegs.bender.framework.api.IConfig\"/>\n\t<configure public=\"1\" set=\"method\" line=\"15\"><f a=\"\"><x path=\"Void\"/></f></configure>\n\t<new public=\"1\" set=\"method\" line=\"13\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
-com_cesar_models_ModelConfig.__rtti = "<class path=\"com.cesar.models.ModelConfig\" params=\"\">\n\t<implements path=\"robotlegs.bender.framework.api.IConfig\"/>\n\t<configure public=\"1\" set=\"method\" line=\"15\"><f a=\"\"><x path=\"Void\"/></f></configure>\n\t<new public=\"1\" set=\"method\" line=\"13\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
-com_cesar_services_ServiceConfig.__rtti = "<class path=\"com.cesar.services.ServiceConfig\" params=\"\">\n\t<implements path=\"robotlegs.bender.framework.api.IConfig\"/>\n\t<configure public=\"1\" set=\"method\" line=\"15\"><f a=\"\"><x path=\"Void\"/></f></configure>\n\t<new public=\"1\" set=\"method\" line=\"13\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
-com_cesar_utils_Constants.__rtti = "<class path=\"com.cesar.utils.Constants\" params=\"\">\n\t<BOARD_INITIAL_X_POSITION public=\"1\" get=\"inline\" set=\"null\" expr=\"10\" line=\"11\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>10</e></m></meta>\n\t</BOARD_INITIAL_X_POSITION>\n\t<BOARD_INITIAL_Y_POSITION public=\"1\" get=\"inline\" set=\"null\" expr=\"10\" line=\"12\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>10</e></m></meta>\n\t</BOARD_INITIAL_Y_POSITION>\n\t<BOARD_WIDTH public=\"1\" get=\"inline\" set=\"null\" expr=\"320\" line=\"14\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>320</e></m></meta>\n\t</BOARD_WIDTH>\n\t<BOARD_HEIGHT public=\"1\" get=\"inline\" set=\"null\" expr=\"576\" line=\"15\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>576</e></m></meta>\n\t</BOARD_HEIGHT>\n\t<BLOCK_SIZE public=\"1\" get=\"inline\" set=\"null\" expr=\"32\" line=\"16\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>32</e></m></meta>\n\t</BLOCK_SIZE>\n\t<new public=\"1\" set=\"method\" line=\"18\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
-com_cesar_utils_Constants.BOARD_INITIAL_X_POSITION = 10;
-com_cesar_utils_Constants.BOARD_INITIAL_Y_POSITION = 10;
-com_cesar_utils_Constants.BOARD_WIDTH = 320;
-com_cesar_utils_Constants.BOARD_HEIGHT = 576;
-com_cesar_utils_Constants.BLOCK_SIZE = 32;
+com_cesar_commands_CommandConfig.__meta__ = { fields : { commandMap : { inject : null}}};
+com_cesar_commands_CommandConfig.__rtti = "<class path=\"com.cesar.commands.CommandConfig\" params=\"\">\n\t<implements path=\"robotlegs.bender.framework.api.IConfig\"/>\n\t<commandMap public=\"1\">\n\t\t<c path=\"robotlegs.bender.extensions.signalCommandMap.api.ISignalCommandMap\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</commandMap>\n\t<configure public=\"1\" set=\"method\" line=\"19\"><f a=\"\"><x path=\"Void\"/></f></configure>\n\t<new public=\"1\" set=\"method\" line=\"17\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+robotlegs_bender_bundles_mvcs_Command.__rtti = "<class path=\"robotlegs.bender.bundles.mvcs.Command\" params=\"\">\n\t<implements path=\"robotlegs.bender.extensions.commandCenter.api.ICommand\"/>\n\t<execute public=\"1\" set=\"method\" line=\"31\"><f a=\"\"><x path=\"Void\"/></f></execute>\n\t<meta>\n\t\t<m n=\":keepSub\"/>\n\t\t<m n=\":rtti\"/>\n\t</meta>\n</class>";
+com_cesar_commands_ShapeActionCommand.__meta__ = { fields : { tetrisBoardModel : { inject : null}, shapeAction : { inject : null}}};
+com_cesar_commands_ShapeActionCommand.__rtti = "<class path=\"com.cesar.commands.ShapeActionCommand\" params=\"\">\n\t<extends path=\"robotlegs.bender.bundles.mvcs.Command\"/>\n\t<tetrisBoardModel public=\"1\">\n\t\t<c path=\"com.cesar.models.board.TetrisBoardModel\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</tetrisBoardModel>\n\t<shapeAction public=\"1\">\n\t\t<e path=\"com.cesar.utils.enums.ShapeAction\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</shapeAction>\n\t<execute public=\"1\" set=\"method\" line=\"23\" override=\"1\"><f a=\"\"><x path=\"Void\"/></f></execute>\n\t<new public=\"1\" set=\"method\" line=\"21\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_ModelConfig.__meta__ = { fields : { injector : { inject : null}}};
+com_cesar_models_ModelConfig.__rtti = "<class path=\"com.cesar.models.ModelConfig\" params=\"\">\n\t<implements path=\"robotlegs.bender.framework.api.IConfig\"/>\n\t<injector public=\"1\">\n\t\t<c path=\"robotlegs.bender.framework.api.IInjector\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</injector>\n\t<configure public=\"1\" set=\"method\" line=\"20\"><f a=\"\"><x path=\"Void\"/></f></configure>\n\t<new public=\"1\" set=\"method\" line=\"18\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_board_TetrisBoardModel.__meta__ = { fields : { shapeUpdateSignal : { inject : null}}};
+com_cesar_models_board_TetrisBoardModel.__rtti = "<class path=\"com.cesar.models.board.TetrisBoardModel\" params=\"\">\n\t<board><c path=\"Array\"><c path=\"Array\"><x path=\"Bool\"/></c></c></board>\n\t<landedShapes><c path=\"Array\"><c path=\"com.cesar.models.shapes.BaseShape\"/></c></landedShapes>\n\t<currentShape><c path=\"com.cesar.models.shapes.BaseShape\"/></currentShape>\n\t<shapeUpdateSignal public=\"1\">\n\t\t<c path=\"com.cesar.models.signals.ShapeUpdatedSignal\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</shapeUpdateSignal>\n\t<get_LandedShapes public=\"1\" set=\"method\" line=\"27\"><f a=\"\"><c path=\"Array\"><c path=\"com.cesar.models.shapes.BaseShape\"/></c></f></get_LandedShapes>\n\t<set_LandedShapes public=\"1\" set=\"method\" line=\"32\"><f a=\"value\">\n\t<c path=\"Array\"><c path=\"com.cesar.models.shapes.BaseShape\"/></c>\n\t<x path=\"Void\"/>\n</f></set_LandedShapes>\n\t<get_CurrentShape public=\"1\" set=\"method\" line=\"37\"><f a=\"\"><c path=\"com.cesar.models.shapes.BaseShape\"/></f></get_CurrentShape>\n\t<set_CurrentShape public=\"1\" set=\"method\" line=\"42\"><f a=\"value\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Void\"/>\n</f></set_CurrentShape>\n\t<get_Board public=\"1\" set=\"method\" line=\"48\"><f a=\"\"><c path=\"Array\"><c path=\"Array\"><x path=\"Bool\"/></c></c></f></get_Board>\n\t<landShape public=\"1\" set=\"method\" line=\"53\"><f a=\"\"><x path=\"Void\"/></f></landShape>\n\t<landShapeInTheBoard set=\"method\" line=\"59\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Void\"/>\n</f></landShapeInTheBoard>\n\t<initBoard set=\"method\" line=\"67\"><f a=\"\"><x path=\"Void\"/></f></initBoard>\n\t<new public=\"1\" set=\"method\" line=\"21\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_business_factories_ActionShapeFactory.__rtti = "<class path=\"com.cesar.models.business.factories.ActionShapeFactory\" params=\"\">\n\t<CreateShapeActionMove public=\"1\" set=\"method\" line=\"22\" static=\"1\"><f a=\"action:tetrisBoardModel\">\n\t<e path=\"com.cesar.utils.enums.ShapeAction\"/>\n\t<c path=\"com.cesar.models.board.TetrisBoardModel\"/>\n\t<c path=\"com.cesar.models.business.shapeMovements.ShapeMovement\"/>\n</f></CreateShapeActionMove>\n\t<new public=\"1\" set=\"method\" line=\"20\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_business_factories_ShapeFactory.__rtti = "<class path=\"com.cesar.models.business.factories.ShapeFactory\" params=\"\">\n\t<shapeList expr=\"[ShapeType.Square,ShapeType.L,ShapeType.S,ShapeType.T,ShapeType.I]\" line=\"22\" static=\"1\">\n\t\t<c path=\"Array\"><e path=\"com.cesar.models.shapes.enums.ShapeType\"/></c>\n\t\t<meta><m n=\":value\"><e>[ShapeType.Square,ShapeType.L,ShapeType.S,ShapeType.T,ShapeType.I]</e></m></meta>\n\t</shapeList>\n\t<CreateNewRandomShape public=\"1\" set=\"method\" line=\"24\" static=\"1\"><f a=\"\"><c path=\"com.cesar.models.shapes.BaseShape\"/></f></CreateNewRandomShape>\n\t<cloneShape public=\"1\" set=\"method\" line=\"48\" static=\"1\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n</f></cloneShape>\n\t<getRandomShapeType set=\"method\" line=\"82\" static=\"1\"><f a=\"\"><e path=\"com.cesar.models.shapes.enums.ShapeType\"/></f></getRandomShapeType>\n\t<new public=\"1\" set=\"method\" line=\"20\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_business_factories_ShapeFactory.shapeList = [com_cesar_models_shapes_enums_ShapeType.Square,com_cesar_models_shapes_enums_ShapeType.L,com_cesar_models_shapes_enums_ShapeType.S,com_cesar_models_shapes_enums_ShapeType.T,com_cesar_models_shapes_enums_ShapeType.I];
+com_cesar_models_business_shapeMovements_DefaultShapeMove.__rtti = "<class path=\"com.cesar.models.business.shapeMovements.DefaultShapeMove\" params=\"\">\n\t<implements path=\"com.cesar.models.business.shapeMovements.IShapeMove\"/>\n\t<move public=\"1\" set=\"method\" line=\"15\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Void\"/>\n</f></move>\n\t<shapeReachedBoardLimits public=\"1\" set=\"method\" line=\"23\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Bool\"/>\n</f></shapeReachedBoardLimits>\n\t<new public=\"1\" set=\"method\" line=\"13\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_business_shapeMovements_LeftShapeMove.__rtti = "<class path=\"com.cesar.models.business.shapeMovements.LeftShapeMove\" params=\"\">\n\t<implements path=\"com.cesar.models.business.shapeMovements.IShapeMove\"/>\n\t<move public=\"1\" set=\"method\" line=\"14\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Void\"/>\n</f></move>\n\t<shapeReachedBoardLimits public=\"1\" set=\"method\" line=\"22\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Bool\"/>\n</f></shapeReachedBoardLimits>\n\t<new public=\"1\" set=\"method\" line=\"12\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_business_shapeMovements_RightShapeMove.__rtti = "<class path=\"com.cesar.models.business.shapeMovements.RightShapeMove\" params=\"\">\n\t<implements path=\"com.cesar.models.business.shapeMovements.IShapeMove\"/>\n\t<move public=\"1\" set=\"method\" line=\"15\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Void\"/>\n</f></move>\n\t<shapeReachedBoardLimits public=\"1\" set=\"method\" line=\"23\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Bool\"/>\n</f></shapeReachedBoardLimits>\n\t<new public=\"1\" set=\"method\" line=\"13\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_business_shapeMovements_RotateShapeMove.__rtti = "<class path=\"com.cesar.models.business.shapeMovements.RotateShapeMove\" params=\"\">\n\t<implements path=\"com.cesar.models.business.shapeMovements.IShapeMove\"/>\n\t<move public=\"1\" set=\"method\" line=\"14\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Void\"/>\n</f></move>\n\t<shapeReachedBoardLimits public=\"1\" set=\"method\" line=\"19\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Bool\"/>\n</f></shapeReachedBoardLimits>\n\t<new public=\"1\" set=\"method\" line=\"12\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_business_shapeMovements_ShapeMovement.__rtti = "<class path=\"com.cesar.models.business.shapeMovements.ShapeMovement\" params=\"\">\n\t<boardModel><c path=\"com.cesar.models.board.TetrisBoardModel\"/></boardModel>\n\t<iShapeMove><c path=\"com.cesar.models.business.shapeMovements.IShapeMove\"/></iShapeMove>\n\t<moveShape public=\"1\" set=\"method\" line=\"25\"><f a=\"\"><x path=\"Void\"/></f></moveShape>\n\t<shapeCollided public=\"1\" set=\"method\" line=\"51\"><f a=\"shape\">\n\t<c path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<x path=\"Bool\"/>\n</f></shapeCollided>\n\t<new public=\"1\" set=\"method\" line=\"19\"><f a=\"iShapeMove:tetrisBoardModel\">\n\t<c path=\"com.cesar.models.business.shapeMovements.IShapeMove\"/>\n\t<c path=\"com.cesar.models.board.TetrisBoardModel\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_shapes_BaseShape.__rtti = "<class path=\"com.cesar.models.shapes.BaseShape\" params=\"\">\n\t<Blocks public=\"1\" get=\"accessor\" set=\"accessor\">\n\t\t<x path=\"haxe.ds.Vector\"><c path=\"com.cesar.models.shapes.Block\"/></x>\n\t\t<meta><m n=\":isVar\"/></meta>\n\t</Blocks>\n\t<get_Blocks set=\"method\" line=\"19\"><f a=\"\"><x path=\"haxe.ds.Vector\"><c path=\"com.cesar.models.shapes.Block\"/></x></f></get_Blocks>\n\t<set_Blocks set=\"method\" line=\"24\"><f a=\"value\">\n\t<x path=\"haxe.ds.Vector\"><c path=\"com.cesar.models.shapes.Block\"/></x>\n\t<x path=\"haxe.ds.Vector\"><c path=\"com.cesar.models.shapes.Block\"/></x>\n</f></set_Blocks>\n\t<new public=\"1\" set=\"method\" line=\"14\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_shapes_Block.__rtti = "<class path=\"com.cesar.models.shapes.Block\" params=\"\">\n\t<XPosition public=\"1\" get=\"accessor\" set=\"accessor\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":isVar\"/></meta>\n\t</XPosition>\n\t<YPosition public=\"1\" get=\"accessor\" set=\"accessor\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":isVar\"/></meta>\n\t</YPosition>\n\t<get_XPosition set=\"method\" line=\"21\"><f a=\"\"><x path=\"Int\"/></f></get_XPosition>\n\t<set_XPosition set=\"method\" line=\"26\"><f a=\"value\">\n\t<x path=\"Int\"/>\n\t<x path=\"Int\"/>\n</f></set_XPosition>\n\t<get_YPosition set=\"method\" line=\"31\"><f a=\"\"><x path=\"Int\"/></f></get_YPosition>\n\t<set_YPosition set=\"method\" line=\"36\"><f a=\"value\">\n\t<x path=\"Int\"/>\n\t<x path=\"Int\"/>\n</f></set_YPosition>\n\t<new public=\"1\" set=\"method\" line=\"12\"><f a=\"x:y\">\n\t<x path=\"Int\"/>\n\t<x path=\"Int\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_shapes_IShape.__rtti = "<class path=\"com.cesar.models.shapes.IShape\" params=\"\">\n\t<extends path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<new public=\"1\" set=\"method\" line=\"11\"><f a=\"x:y\">\n\t<x path=\"Int\"/>\n\t<x path=\"Int\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_shapes_LShape.__rtti = "<class path=\"com.cesar.models.shapes.LShape\" params=\"\">\n\t<extends path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<new public=\"1\" set=\"method\" line=\"11\"><f a=\"x:y\">\n\t<x path=\"Int\"/>\n\t<x path=\"Int\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_shapes_SShape.__rtti = "<class path=\"com.cesar.models.shapes.SShape\" params=\"\">\n\t<extends path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<new public=\"1\" set=\"method\" line=\"11\"><f a=\"x:y\">\n\t<x path=\"Int\"/>\n\t<x path=\"Int\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_shapes_SquareShape.__rtti = "<class path=\"com.cesar.models.shapes.SquareShape\" params=\"\">\n\t<extends path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<new public=\"1\" set=\"method\" line=\"11\"><f a=\"x:y\">\n\t<x path=\"Int\"/>\n\t<x path=\"Int\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_shapes_TShape.__rtti = "<class path=\"com.cesar.models.shapes.TShape\" params=\"\">\n\t<extends path=\"com.cesar.models.shapes.BaseShape\"/>\n\t<new public=\"1\" set=\"method\" line=\"11\"><f a=\"x:y\">\n\t<x path=\"Int\"/>\n\t<x path=\"Int\"/>\n\t<x path=\"Void\"/>\n</f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_models_signals_ShapeUpdatedSignal.__rtti = "<class path=\"com.cesar.models.signals.ShapeUpdatedSignal\" params=\"\">\n\t<extends path=\"msignal.Signal1\"><c path=\"com.cesar.models.board.TetrisBoardModel\"/></extends>\n\t<new public=\"1\" set=\"method\" line=\"14\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_utils_constants_KeyBoardCodeConstants.SPACEBAR_CODE = 32;
+com_cesar_utils_constants_KeyBoardCodeConstants.ARROW_LEFT_CODE = 37;
+com_cesar_utils_constants_KeyBoardCodeConstants.ARROW_UP_CODE = 38;
+com_cesar_utils_constants_KeyBoardCodeConstants.ARROW_RIGHT_CODE = 39;
+com_cesar_utils_constants_KeyBoardCodeConstants.ARROW_DOWN_CODE = 40;
+com_cesar_utils_constants_SizeConstants.__rtti = "<class path=\"com.cesar.utils.constants.SizeConstants\" params=\"\">\n\t<BOARD_INITIAL_X_POSITION public=\"1\" get=\"inline\" set=\"null\" expr=\"10\" line=\"11\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>10</e></m></meta>\n\t</BOARD_INITIAL_X_POSITION>\n\t<BOARD_INITIAL_Y_POSITION public=\"1\" get=\"inline\" set=\"null\" expr=\"10\" line=\"12\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>10</e></m></meta>\n\t</BOARD_INITIAL_Y_POSITION>\n\t<BOARD_WIDTH public=\"1\" get=\"inline\" set=\"null\" expr=\"320\" line=\"14\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>320</e></m></meta>\n\t</BOARD_WIDTH>\n\t<BOARD_HEIGHT public=\"1\" get=\"inline\" set=\"null\" expr=\"576\" line=\"15\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>576</e></m></meta>\n\t</BOARD_HEIGHT>\n\t<BLOCK_SIZE public=\"1\" get=\"inline\" set=\"null\" expr=\"32\" line=\"16\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>32</e></m></meta>\n\t</BLOCK_SIZE>\n\t<SHAPE_INITIAL_X_POSITION public=\"1\" get=\"inline\" set=\"null\" expr=\"2\" line=\"17\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>2</e></m></meta>\n\t</SHAPE_INITIAL_X_POSITION>\n\t<SHAPE_INITIAL_Y_POSITION public=\"1\" get=\"inline\" set=\"null\" expr=\"0\" line=\"18\" static=\"1\">\n\t\t<x path=\"Int\"/>\n\t\t<meta><m n=\":value\"><e>0</e></m></meta>\n\t</SHAPE_INITIAL_Y_POSITION>\n\t<new public=\"1\" set=\"method\" line=\"20\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_utils_constants_SizeConstants.BOARD_INITIAL_X_POSITION = 10;
+com_cesar_utils_constants_SizeConstants.BOARD_INITIAL_Y_POSITION = 10;
+com_cesar_utils_constants_SizeConstants.BOARD_WIDTH = 320;
+com_cesar_utils_constants_SizeConstants.BOARD_HEIGHT = 576;
+com_cesar_utils_constants_SizeConstants.BLOCK_SIZE = 32;
+com_cesar_utils_constants_SizeConstants.SHAPE_INITIAL_X_POSITION = 2;
+com_cesar_utils_constants_SizeConstants.SHAPE_INITIAL_Y_POSITION = 0;
 com_cesar_views_ViewConfig.__meta__ = { fields : { context : { inject : null}, mediatorMap : { inject : null}, contextView : { inject : null}}};
 com_cesar_views_ViewConfig.__rtti = "<class path=\"com.cesar.views.ViewConfig\" params=\"\">\n\t<implements path=\"robotlegs.bender.framework.api.IConfig\"/>\n\t<context public=\"1\">\n\t\t<c path=\"robotlegs.bender.framework.api.IContext\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</context>\n\t<mediatorMap public=\"1\">\n\t\t<c path=\"robotlegs.bender.extensions.mediatorMap.api.IMediatorMap\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</mediatorMap>\n\t<contextView public=\"1\">\n\t\t<c path=\"robotlegs.bender.extensions.contextView.ContextView\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</contextView>\n\t<configure public=\"1\" set=\"method\" line=\"25\"><f a=\"\"><x path=\"Void\"/></f></configure>\n\t<init set=\"method\" line=\"30\"><f a=\"\"><x path=\"Void\"/></f></init>\n\t<mapMediators set=\"method\" line=\"36\"><f a=\"\"><x path=\"Void\"/></f></mapMediators>\n\t<initMainView set=\"method\" line=\"41\"><f a=\"\"><x path=\"Void\"/></f></initMainView>\n\t<new public=\"1\" set=\"method\" line=\"23\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
-com_cesar_views_openfl_MainView.__rtti = "<class path=\"com.cesar.views.openfl.MainView\" params=\"\">\n\t<extends path=\"openfl.display.Sprite\"/>\n\t<Initialize public=\"1\" set=\"method\" line=\"20\"><f a=\"\"><x path=\"Void\"/></f></Initialize>\n\t<new public=\"1\" set=\"method\" line=\"15\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_views_openfl_MainView.__rtti = "<class path=\"com.cesar.views.openfl.MainView\" params=\"\">\n\t<extends path=\"openfl.display.Sprite\"/>\n\t<startGameMessage><c path=\"openfl.text.TextField\"/></startGameMessage>\n\t<instructionMessage><c path=\"openfl.text.TextField\"/></instructionMessage>\n\t<Initialize public=\"1\" set=\"method\" line=\"26\"><f a=\"\"><x path=\"Void\"/></f></Initialize>\n\t<setInstructionGameText set=\"method\" line=\"36\"><f a=\"\"><x path=\"Void\"/></f></setInstructionGameText>\n\t<new public=\"1\" set=\"method\" line=\"21\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
 robotlegs_bender_bundles_mvcs_Mediator.__meta__ = { fields : { eventMap : { inject : null}, eventDispatcher : { inject : null}}};
 robotlegs_bender_bundles_mvcs_Mediator.__rtti = "<class path=\"robotlegs.bender.bundles.mvcs.Mediator\" params=\"\">\n\t<implements path=\"robotlegs.bender.extensions.mediatorMap.api.IMediator\"/>\n\t<eventMap public=\"1\">\n\t\t<c path=\"robotlegs.bender.extensions.localEventMap.api.IEventMap\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</eventMap>\n\t<eventDispatcher public=\"1\">\n\t\t<c path=\"openfl.events.IEventDispatcher\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</eventDispatcher>\n\t<viewComponent public=\"1\" get=\"null\"><d/></viewComponent>\n\t<initialize public=\"1\" set=\"method\" line=\"43\"><f a=\"\"><x path=\"Void\"/></f></initialize>\n\t<destroy public=\"1\" set=\"method\" line=\"50\"><f a=\"\"><x path=\"Void\"/></f></destroy>\n\t<postDestroy public=\"1\" set=\"method\" line=\"58\"><f a=\"\"><x path=\"Void\"/></f></postDestroy>\n\t<addViewListener set=\"method\" line=\"67\">\n\t\t<f a=\"eventString:listener:?eventClass\" v=\"::null\">\n\t\t\t<c path=\"String\"/>\n\t\t\t<d/>\n\t\t\t<x path=\"Class\"><d/></x>\n\t\t\t<x path=\"Void\"/>\n\t\t</f>\n\t\t<meta><m n=\":value\"><e>{eventClass:null}</e></m></meta>\n\t</addViewListener>\n\t<addContextListener set=\"method\" line=\"72\">\n\t\t<f a=\"eventString:listener:?eventClass\" v=\"::null\">\n\t\t\t<c path=\"String\"/>\n\t\t\t<d/>\n\t\t\t<x path=\"Class\"><d/></x>\n\t\t\t<x path=\"Void\"/>\n\t\t</f>\n\t\t<meta><m n=\":value\"><e>{eventClass:null}</e></m></meta>\n\t</addContextListener>\n\t<removeViewListener set=\"method\" line=\"77\">\n\t\t<f a=\"eventString:listener:?eventClass\" v=\"::null\">\n\t\t\t<c path=\"String\"/>\n\t\t\t<d/>\n\t\t\t<x path=\"Class\"><d/></x>\n\t\t\t<x path=\"Void\"/>\n\t\t</f>\n\t\t<meta><m n=\":value\"><e>{eventClass:null}</e></m></meta>\n\t</removeViewListener>\n\t<removeContextListener set=\"method\" line=\"82\">\n\t\t<f a=\"eventString:listener:?eventClass\" v=\"::null\">\n\t\t\t<c path=\"String\"/>\n\t\t\t<d/>\n\t\t\t<x path=\"Class\"><d/></x>\n\t\t\t<x path=\"Void\"/>\n\t\t</f>\n\t\t<meta><m n=\":value\"><e>{eventClass:null}</e></m></meta>\n\t</removeContextListener>\n\t<dispatch set=\"method\" line=\"87\"><f a=\"event\">\n\t<c path=\"openfl.events.Event\"/>\n\t<x path=\"Void\"/>\n</f></dispatch>\n\t<meta>\n\t\t<m n=\":keepSub\"/>\n\t\t<m n=\":rtti\"/>\n\t</meta>\n</class>";
 com_cesar_views_openfl_MainViewMediator.__meta__ = { fields : { mediatorMap : { inject : null}, view : { inject : null}}};
 com_cesar_views_openfl_MainViewMediator.__rtti = "<class path=\"com.cesar.views.openfl.MainViewMediator\" params=\"\">\n\t<extends path=\"robotlegs.bender.bundles.mvcs.Mediator\"/>\n\t<mediatorMap public=\"1\">\n\t\t<c path=\"robotlegs.bender.extensions.mediatorMap.api.IMediatorMap\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</mediatorMap>\n\t<view public=\"1\">\n\t\t<c path=\"com.cesar.views.openfl.MainView\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</view>\n\t<initialize public=\"1\" set=\"method\" line=\"26\" override=\"1\"><f a=\"\"><x path=\"Void\"/></f></initialize>\n\t<new public=\"1\" set=\"method\" line=\"20\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
-com_cesar_views_openfl_board_TetrisBoardView.__rtti = "<class path=\"com.cesar.views.openfl.board.TetrisBoardView\" params=\"\">\n\t<extends path=\"openfl.display.Sprite\"/>\n\t<Initialize public=\"1\" set=\"method\" line=\"20\"><f a=\"\"><x path=\"Void\"/></f></Initialize>\n\t<createEmptyTetrisBoard set=\"method\" line=\"25\"><f a=\"\"><x path=\"Void\"/></f></createEmptyTetrisBoard>\n\t<new public=\"1\" set=\"method\" line=\"15\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
-com_cesar_views_openfl_board_TetrisBoardViewMediator.__meta__ = { fields : { view : { inject : null}}};
-com_cesar_views_openfl_board_TetrisBoardViewMediator.__rtti = "<class path=\"com.cesar.views.openfl.board.TetrisBoardViewMediator\" params=\"\">\n\t<extends path=\"robotlegs.bender.bundles.mvcs.Mediator\"/>\n\t<view public=\"1\">\n\t\t<c path=\"com.cesar.views.openfl.board.TetrisBoardView\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</view>\n\t<initialize public=\"1\" set=\"method\" line=\"17\" override=\"1\"><f a=\"\"><x path=\"Void\"/></f></initialize>\n\t<new public=\"1\" set=\"method\" line=\"15\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_views_openfl_board_TetrisBoardView.__rtti = "<class path=\"com.cesar.views.openfl.board.TetrisBoardView\" params=\"\">\n\t<extends path=\"openfl.display.Sprite\"/>\n\t<currentGameState><e path=\"com.cesar.utils.enums.GameState\"/></currentGameState>\n\t<arrowUpPressed expr=\"false\" line=\"24\">\n\t\t<x path=\"Bool\"/>\n\t\t<meta><m n=\":value\"><e>false</e></m></meta>\n\t</arrowUpPressed>\n\t<arrowDownPressed expr=\"false\" line=\"25\">\n\t\t<x path=\"Bool\"/>\n\t\t<meta><m n=\":value\"><e>false</e></m></meta>\n\t</arrowDownPressed>\n\t<arrowLeftPressed expr=\"false\" line=\"26\">\n\t\t<x path=\"Bool\"/>\n\t\t<meta><m n=\":value\"><e>false</e></m></meta>\n\t</arrowLeftPressed>\n\t<arrowRightPressed expr=\"false\" line=\"27\">\n\t\t<x path=\"Bool\"/>\n\t\t<meta><m n=\":value\"><e>false</e></m></meta>\n\t</arrowRightPressed>\n\t<default_action_signal public=\"1\" expr=\"&apos;???&apos;\" line=\"29\">\n\t\t<c path=\"msignal.Signal0\"/>\n\t\t<meta><m n=\":value\"><e>'???'</e></m></meta>\n\t</default_action_signal>\n\t<rotate_action_signal public=\"1\" expr=\"&apos;???&apos;\" line=\"30\">\n\t\t<c path=\"msignal.Signal0\"/>\n\t\t<meta><m n=\":value\"><e>'???'</e></m></meta>\n\t</rotate_action_signal>\n\t<move_left_action_signal public=\"1\" expr=\"&apos;???&apos;\" line=\"31\">\n\t\t<c path=\"msignal.Signal0\"/>\n\t\t<meta><m n=\":value\"><e>'???'</e></m></meta>\n\t</move_left_action_signal>\n\t<move_right_action_signal public=\"1\" expr=\"&apos;???&apos;\" line=\"32\">\n\t\t<c path=\"msignal.Signal0\"/>\n\t\t<meta><m n=\":value\"><e>'???'</e></m></meta>\n\t</move_right_action_signal>\n\t<move_down_action_signal public=\"1\" expr=\"&apos;???&apos;\" line=\"33\">\n\t\t<c path=\"msignal.Signal0\"/>\n\t\t<meta><m n=\":value\"><e>'???'</e></m></meta>\n\t</move_down_action_signal>\n\t<blockSize><x path=\"Int\"/></blockSize>\n\t<columnQuantity><x path=\"Int\"/></columnQuantity>\n\t<rowQuantity><x path=\"Int\"/></rowQuantity>\n\t<Initialize public=\"1\" set=\"method\" line=\"44\"><f a=\"\"><x path=\"Void\"/></f></Initialize>\n\t<UpdateBoardState public=\"1\" set=\"method\" line=\"54\"><f a=\"tetrisBoard\">\n\t<c path=\"com.cesar.models.board.TetrisBoardModel\"/>\n\t<x path=\"Void\"/>\n</f></UpdateBoardState>\n\t<cleanBoard set=\"method\" line=\"60\"><f a=\"\"><x path=\"Void\"/></f></cleanBoard>\n\t<paintBoardWithUpdatedModel set=\"method\" line=\"75\"><f a=\"tetrisBoard\">\n\t<c path=\"com.cesar.models.board.TetrisBoardModel\"/>\n\t<x path=\"Void\"/>\n</f></paintBoardWithUpdatedModel>\n\t<setSizeVariables set=\"method\" line=\"108\"><f a=\"\"><x path=\"Void\"/></f></setSizeVariables>\n\t<createGrid set=\"method\" line=\"118\"><f a=\"\"><x path=\"Void\"/></f></createGrid>\n\t<setGameState set=\"method\" line=\"136\"><f a=\"state\">\n\t<e path=\"com.cesar.utils.enums.GameState\"/>\n\t<x path=\"Void\"/>\n</f></setGameState>\n\t<onKeyDownHandler set=\"method\" line=\"141\"><f a=\"e\">\n\t<c path=\"openfl.events.KeyboardEvent\"/>\n\t<x path=\"Void\"/>\n</f></onKeyDownHandler>\n\t<startGame set=\"method\" line=\"153\"><f a=\"\"><x path=\"Void\"/></f></startGame>\n\t<handleArrowsKeyBoard set=\"method\" line=\"158\"><f a=\"e\">\n\t<c path=\"openfl.events.KeyboardEvent\"/>\n\t<x path=\"Void\"/>\n</f></handleArrowsKeyBoard>\n\t<everyFrame set=\"method\" line=\"178\"><f a=\"event\">\n\t<t path=\"flash.events.Event\"/>\n\t<x path=\"Void\"/>\n</f></everyFrame>\n\t<new public=\"1\" set=\"method\" line=\"39\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
+com_cesar_views_openfl_board_TetrisBoardViewMediator.__meta__ = { fields : { view : { inject : null}, signal : { inject : null}, shapeUpdatedSignal : { inject : null}}};
+com_cesar_views_openfl_board_TetrisBoardViewMediator.__rtti = "<class path=\"com.cesar.views.openfl.board.TetrisBoardViewMediator\" params=\"\">\n\t<extends path=\"robotlegs.bender.bundles.mvcs.Mediator\"/>\n\t<view public=\"1\">\n\t\t<c path=\"com.cesar.views.openfl.board.TetrisBoardView\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</view>\n\t<signal public=\"1\">\n\t\t<c path=\"com.cesar.commands.signals.ShapeActionSignal\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</signal>\n\t<shapeUpdatedSignal public=\"1\">\n\t\t<c path=\"com.cesar.models.signals.ShapeUpdatedSignal\"/>\n\t\t<meta><m n=\"inject\"/></meta>\n\t</shapeUpdatedSignal>\n\t<initialize public=\"1\" set=\"method\" line=\"23\" override=\"1\"><f a=\"\"><x path=\"Void\"/></f></initialize>\n\t<OnDefaultAction set=\"method\" line=\"35\"><f a=\"\"><x path=\"Void\"/></f></OnDefaultAction>\n\t<OnRotateAction set=\"method\" line=\"40\"><f a=\"\"><x path=\"Void\"/></f></OnRotateAction>\n\t<OnMoveLeftAction set=\"method\" line=\"45\"><f a=\"\"><x path=\"Void\"/></f></OnMoveLeftAction>\n\t<OnMoveRightAction set=\"method\" line=\"50\"><f a=\"\"><x path=\"Void\"/></f></OnMoveRightAction>\n\t<OnMoveDownAction set=\"method\" line=\"55\"><f a=\"\"><x path=\"Void\"/></f></OnMoveDownAction>\n\t<OnUpdateShapeInTheBoard set=\"method\" line=\"60\"><f a=\"board\">\n\t<c path=\"com.cesar.models.board.TetrisBoardModel\"/>\n\t<x path=\"Void\"/>\n</f></OnUpdateShapeInTheBoard>\n\t<new public=\"1\" set=\"method\" line=\"21\"><f a=\"\"><x path=\"Void\"/></f></new>\n\t<meta>\n\t\t<m n=\":directlyUsed\"/>\n\t\t<m n=\":rtti\"/>\n\t\t<m n=\":keepSub\"/>\n\t</meta>\n</class>";
 haxe_ds_ObjectMap.count = 0;
 haxe_io_FPHelper.i64tmp = (function($this) {
 	var $r;

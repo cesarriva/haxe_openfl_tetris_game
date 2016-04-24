@@ -1,8 +1,9 @@
 package com.cesar.views.openfl.board;
 
-import com.cesar.commands.signals.DefaultActionSignal;
+import com.cesar.commands.signals.ShapeActionSignal;
 import com.cesar.models.board.TetrisBoardModel;
 import com.cesar.models.signals.ShapeUpdatedSignal;
+import com.cesar.utils.enums.ShapeAction;
 import robotlegs.bender.bundles.mvcs.Mediator;
 
 /**
@@ -14,7 +15,7 @@ import robotlegs.bender.bundles.mvcs.Mediator;
 class TetrisBoardViewMediator extends Mediator
 {
 	@inject public var view:TetrisBoardView;
-	@inject public var signal:DefaultActionSignal;
+	@inject public var signal:ShapeActionSignal;
 	@inject public var shapeUpdatedSignal:ShapeUpdatedSignal;
 	
 	public function new() { }
@@ -26,29 +27,34 @@ class TetrisBoardViewMediator extends Mediator
 		view.rotate_action_signal.add(OnRotateAction);
 		view.move_left_action_signal.add(OnMoveLeftAction);
 		view.move_right_action_signal.add(OnMoveRightAction);
+		view.move_down_action_signal.add(OnMoveDownAction);
 		
 		shapeUpdatedSignal.add(OnUpdateShapeInTheBoard);
-		
 	}
 	
 	private function OnDefaultAction():Void
 	{
-		signal.dispatch();
+		signal.dispatch(ShapeAction.DefaultMove);
 	}
 	
 	private function OnRotateAction():Void
 	{
-		
+		signal.dispatch(ShapeAction.RotateMove);
 	}
 	
 	private function OnMoveLeftAction():Void
 	{
-		
+		signal.dispatch(ShapeAction.LeftMove);
 	}
 	
 	private function OnMoveRightAction():Void
 	{
-		
+		signal.dispatch(ShapeAction.RightMove);
+	}
+	
+	private function OnMoveDownAction():Void
+	{
+		signal.dispatch(ShapeAction.DownMove);
 	}
 	
 	private function OnUpdateShapeInTheBoard(board:TetrisBoardModel):Void

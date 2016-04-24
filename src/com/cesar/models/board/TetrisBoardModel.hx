@@ -45,13 +45,9 @@ class TetrisBoardModel
 		shapeUpdateSignal.dispatch(this);
 	}
 	
-	public function downShapeByOneUnit()
+	public function get_Board():Array<Array<Bool>>
 	{
-		for (i in 0...currentShape.Blocks.length) 
-		{
-			currentShape.Blocks[i].YPosition++;
-		}
-		shapeUpdateSignal.dispatch(this);
+		return board;
 	}
 	
 	public function landShape():Void
@@ -68,11 +64,6 @@ class TetrisBoardModel
 		};
 	}
 	
-	/**
-	 * Does the board initialization, filling all board cells
-	 * with false, meaning the the board is empty and doesn't have
-	 * any shape on it
-	 */
 	private function initBoard():Void
 	{
 		board = new Array<Array<Bool>>();
