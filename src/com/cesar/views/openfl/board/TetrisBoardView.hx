@@ -210,26 +210,4 @@ class TetrisBoardView extends Sprite
 			}
 		}
 	}
-
-	/**
-	 * Creates a full tile board 10 columns x 18 rows (NOT USED FOR NOW)
-	 */
-	//private function createEmptyTetrisBoard():Void
-	//{
-		//var blockSize:Int = SizeConstants.BLOCK_SIZE;
-		//var columnQuantity:Int = cast((SizeConstants.BOARD_WIDTH  / blockSize), Int);
-		//var rowQuantity:Int = cast((SizeConstants.BOARD_HEIGHT / blockSize), Int);
-		
-		//graphics.beginFill(0);
-		
-		//for (i in 0...columnQuantity)
-		//{
-			//for (j in 0...rowQuantity)
-			//{
-				//graphics.drawRect(((i * blockSize)), ((j * blockSize)), blockSize, blockSize);
-			//}
-		//}
-		
-		//graphics.endFill();
-	//}
 }

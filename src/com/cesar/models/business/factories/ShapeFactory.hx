@@ -7,6 +7,11 @@ import com.cesar.models.shapes.SquareShape;
 import com.cesar.models.shapes.TShape;
 import com.cesar.models.shapes.IShape;
 import com.cesar.models.shapes.enums.ShapeType;
+import com.cesar.models.shapes.rotation.IRotation;
+import com.cesar.models.shapes.rotation.LRotation;
+import com.cesar.models.shapes.rotation.SRotation;
+import com.cesar.models.shapes.rotation.SquareRotation;
+import com.cesar.models.shapes.rotation.TRotation;
 import com.cesar.utils.constants.SizeConstants;
 
 /**
@@ -31,15 +36,15 @@ class ShapeFactory
 		switch (shapeType) 
 		{
 			case ShapeType.Square :
-				return new SquareShape(initialXPosition, initialYPosition);
+				return new SquareShape(initialXPosition, initialYPosition, new SquareRotation());
 			case ShapeType.L:
-				return new LShape(initialXPosition, initialYPosition);
+				return new LShape(initialXPosition, initialYPosition, new LRotation());
 			case ShapeType.S:
-				return new SShape(initialXPosition, initialYPosition);
+				return new SShape(initialXPosition, initialYPosition, new SRotation());
 			case ShapeType.T:
-				return new TShape(initialXPosition, initialYPosition);
+				return new TShape(initialXPosition, initialYPosition, new TRotation());
 			case ShapeType.I:
-				return new IShape(initialXPosition, initialYPosition);
+				return new IShape(initialXPosition, initialYPosition, new IRotation());
 			default:
 				return null;
 		}
@@ -56,24 +61,26 @@ class ShapeFactory
 			
 			if (Std.is(shape, SquareShape))
 			{
-				clonedShape = new SquareShape(xPosition, yPosition);
+				clonedShape = new SquareShape(xPosition, yPosition, shape.rotationShape);
 			}
 			else if (Std.is(shape, LShape))
 			{
-				clonedShape = new LShape(xPosition, yPosition);
+				clonedShape = new LShape(xPosition, yPosition, shape.rotationShape);
 			}	
 			else if (Std.is(shape, SShape))
 			{
-				clonedShape = new SShape(xPosition, yPosition);
+				clonedShape = new SShape(xPosition, yPosition, shape.rotationShape);
 			}	
 			else if (Std.is(shape, TShape))
 			{
-				clonedShape = new TShape(xPosition, yPosition);
+				clonedShape = new TShape(xPosition, yPosition, shape.rotationShape);
 			}	
 			else if (Std.is(shape, IShape))
 			{
-				clonedShape = new IShape(xPosition, yPosition);
+				clonedShape = new IShape(xPosition, yPosition, shape.rotationShape);
 			}
+			
+			clonedShape.CurrentRotationStatus = shape.CurrentRotationStatus;
 		}
 		
 		return clonedShape;
