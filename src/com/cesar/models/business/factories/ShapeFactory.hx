@@ -15,11 +15,9 @@ import com.cesar.models.shapes.rotation.TRotation;
 import com.cesar.utils.constants.SizeConstants;
 
 /**
- * ...
+ * Factory responsible to generate a random shape used in the tetris game
  * @author Cesar Riva
  */
-@:rtti
-@:keepSub
 class ShapeFactory
 {
 	public function new() {	}
@@ -48,42 +46,6 @@ class ShapeFactory
 			default:
 				return null;
 		}
-	}
-	
-	public static function cloneShape(shape:BaseShape):BaseShape
-	{
-		var clonedShape:BaseShape = null;
-		
-		if (shape != null)
-		{
-			var xPosition = shape.Blocks[0].XPosition;
-			var yPosition = shape.Blocks[0].YPosition;
-			
-			if (Std.is(shape, SquareShape))
-			{
-				clonedShape = new SquareShape(xPosition, yPosition, shape.rotationShape);
-			}
-			else if (Std.is(shape, LShape))
-			{
-				clonedShape = new LShape(xPosition, yPosition, shape.rotationShape);
-			}	
-			else if (Std.is(shape, SShape))
-			{
-				clonedShape = new SShape(xPosition, yPosition, shape.rotationShape);
-			}	
-			else if (Std.is(shape, TShape))
-			{
-				clonedShape = new TShape(xPosition, yPosition, shape.rotationShape);
-			}	
-			else if (Std.is(shape, IShape))
-			{
-				clonedShape = new IShape(xPosition, yPosition, shape.rotationShape);
-			}
-			
-			clonedShape.CurrentRotationStatus = shape.CurrentRotationStatus;
-		}
-		
-		return clonedShape;
 	}
 	
 	private static function getRandomShapeType():ShapeType

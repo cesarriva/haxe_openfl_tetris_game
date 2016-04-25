@@ -11,8 +11,6 @@ import openfl.text.TextFormatAlign;
  * ...
  * @author Cesar Riva
  */
-@:rtti
-@:keepSub
 class MainView extends Sprite
 {
 	private var startGameMessage:TextField;
@@ -23,6 +21,10 @@ class MainView extends Sprite
 		super();		
 	}
 	
+	/**
+	 * Initialize the main view in the screen,
+	 * adding a board view on it
+	 */
 	public function Initialize():Void
 	{
 		var tetrisBoard:TetrisBoardView = new TetrisBoardView();

@@ -4,11 +4,9 @@ import com.cesar.models.shapes.enums.RotationStatus;
 import com.cesar.models.shapes.rotation.IRotationShape;
 
 /**
- * ...
+ * Represents a L Shape
  * @author Cesar Riva
  */
-@:rtti
-@:keepSub
 class LShape extends BaseShape
 {
 	public function new(x:Int, y:Int, rotation:IRotationShape) 

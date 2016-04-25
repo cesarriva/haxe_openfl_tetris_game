@@ -7,7 +7,7 @@ import robotlegs.bender.bundles.mvcs.Mediator;
 import robotlegs.bender.extensions.mediatorMap.api.IMediatorMap;
 
 /**
- * ...
+ * Mediate the MainView
  * @author Cesar Riva
  */
 @:rtti

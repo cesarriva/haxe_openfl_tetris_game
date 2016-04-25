@@ -13,7 +13,7 @@ import com.cesar.models.ModelConfig;
 import com.cesar.views.ViewConfig;
 
 /**
- * ...
+ * Main class that initializes the robotlegs context
  * @author Cesar Riva
  */
 class Main extends Sprite 

@@ -3,15 +3,18 @@ import com.cesar.models.shapes.BaseShape;
 import com.cesar.models.shapes.enums.RotationStatus;
 
 /**
- * ...
+ * Handles the rotation movement of each shape
  * @author Cesar Riva
  */
-@:rtti
-@:keepSub
 class RotateShapeMove implements IShapeMove
 {
 	public function new() { }
 	
+	/**
+	 * Turns by 90 degree clockwise all the shapes, considering its actual
+	 * state rotation
+	 * @param	shape
+	 */
 	public function move(shape:BaseShape):Void
 	{	
 		if (shape.CurrentRotationStatus == RotationStatus.Full)
@@ -32,6 +35,11 @@ class RotateShapeMove implements IShapeMove
 		}
 	}
 	
+	/**
+	 * Don't need to check board limits, because it's just a rotation
+	 * @param	shape
+	 * @return
+	 */
 	public function shapeReachedBoardLimits(shape:BaseShape):Bool
 	{
 		return false;

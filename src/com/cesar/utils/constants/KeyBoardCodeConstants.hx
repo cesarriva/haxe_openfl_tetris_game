@@ -1,7 +1,7 @@
 package com.cesar.utils.constants;
 
 /**
- * ...
+ * Stores the codes related to the KEY_DOWN event
  * @author Cesar Riva
  */
 class KeyBoardCodeConstants

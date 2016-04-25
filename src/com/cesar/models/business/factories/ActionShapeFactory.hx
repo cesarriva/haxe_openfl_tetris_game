@@ -10,11 +10,10 @@ import com.cesar.models.business.shapeMovements.RotateShapeMove;
 import com.cesar.utils.enums.ShapeAction;
 
 /**
- * ...
+ * Factory responsible to return a specific ShapeMovement according to the shape action that needs to be
+ * executed
  * @author Cesar Riva
  */
-@:rtti
-@:keepSub
 class ActionShapeFactory
 {	
 	public function new() { }

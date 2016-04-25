@@ -3,15 +3,17 @@ import com.cesar.models.shapes.BaseShape;
 import com.cesar.utils.constants.SizeConstants;
 
 /**
- * ...
+ * Handles the default movement (down by one unit)
  * @author Cesar Riva
  */
-@:rtti
-@:keepSub
 class DefaultShapeMove implements IShapeMove
 {
 	public function new() { }
 	
+	/**
+	 * * Increase Y positions for all shape's blocks
+	 * @param	shape
+	 */
 	public function move(shape:BaseShape)
 	{
 		for (i in 0...shape.Blocks.length) 
@@ -20,6 +22,11 @@ class DefaultShapeMove implements IShapeMove
 		}
 	}
 	
+	/**
+	 * Check the bottom limit
+	 * @param	shape
+	 * @return
+	 */
 	public function shapeReachedBoardLimits(shape:BaseShape):Bool
 	{
 		var shapeReachedLimit:Bool = false;

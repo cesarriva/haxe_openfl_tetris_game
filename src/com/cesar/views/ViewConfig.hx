@@ -9,7 +9,8 @@ import robotlegs.bender.extensions.mediatorMap.api.IMediatorMap;
 import robotlegs.bender.extensions.contextView.ContextView;
 
 /**
- * ...
+ * Class responsible to config the MainView in the application
+ * to its mediator, also add this MainView to the robotlegs context
  * @author Cesar Riva
  */
 @:rtti

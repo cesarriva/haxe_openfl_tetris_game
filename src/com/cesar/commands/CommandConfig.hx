@@ -5,7 +5,7 @@ import robotlegs.bender.framework.api.IConfig;
 import robotlegs.bender.extensions.signalCommandMap.api.ISignalCommandMap;
 
 /**
- * ...
+ * Map all signals to its commands
  * @author Cesar Riva
  */
 @:rtti

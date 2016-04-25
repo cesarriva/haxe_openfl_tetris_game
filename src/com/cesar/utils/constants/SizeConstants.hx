@@ -1,7 +1,7 @@
 package com.cesar.utils.constants;
 
 /**
- * Stores all constants
+ * Stores all constants related to the board size and board position
  * @author Cesar Riva
  */
 @:rtti
