@@ -47,7 +47,7 @@ class SRotation implements IRotationShape
 		shape.CurrentRotationStatus = RotationStatus.ThreeQuarters;
 		
 		shape.Blocks.set(0, new Block((currentX - 1), (currentY - 1)));
-		shape.Blocks.set(1, new Block((currentX - 1), (currentY + 2)));
+		shape.Blocks.set(1, new Block((currentX - 1), (currentY - 2)));
 		shape.Blocks.set(2, new Block(currentX, currentY));
 		shape.Blocks.set(3, new Block(currentX, (currentY - 1)));
 	}

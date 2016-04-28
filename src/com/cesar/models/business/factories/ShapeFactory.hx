@@ -54,5 +54,6 @@ class ShapeFactory
 		var selectedType = shapeList[radomNumber];
 		
 		return selectedType;
+		//return ShapeType.S;
 	}
 }

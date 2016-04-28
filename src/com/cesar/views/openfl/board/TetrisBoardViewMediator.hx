@@ -1,5 +1,6 @@
 package com.cesar.views.openfl.board;
 
+import com.cesar.commands.signals.ErrorSignal;
 import com.cesar.commands.signals.ShapeActionSignal;
 import com.cesar.models.board.TetrisBoardModel;
 import com.cesar.models.signals.GameOverSignal;
@@ -20,6 +21,7 @@ class TetrisBoardViewMediator extends Mediator
 	
 	@inject public var shapeUpdatedSignal:ShapeUpdatedSignal;
 	@inject public var gameOverSignal:GameOverSignal;
+	@inject public var errorSignal:ErrorSignal;
 	
 	public function new() { }
 	
@@ -39,6 +41,7 @@ class TetrisBoardViewMediator extends Mediator
 		
 		shapeUpdatedSignal.add(OnUpdateShapeInTheBoard);
 		gameOverSignal.add(OnGameOver);
+		errorSignal.add(OnHandlingError);
 	}
 	
 	/**
@@ -98,5 +101,10 @@ class TetrisBoardViewMediator extends Mediator
 	private function OnGameOver():Void
 	{
 		view.FinishTheGame();
+	}
+	
+	private function OnHandlingError(errorMsg:String):Void
+	{
+		view.showErrorMessage(errorMsg);
 	}
 }

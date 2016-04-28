@@ -22,6 +22,6 @@
 -D web
 -swf-version 11.2
 -swf bin/flash/bin/Tetris.swf
--swf-header 800:480:2:FFFFFF
+-swf-header 800:480:3:FFFFFF
 -cp bin/flash/haxe
 -debug

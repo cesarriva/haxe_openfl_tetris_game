@@ -1,6 +1,7 @@
 package com.cesar.models.business.shapeMovements;
 import com.cesar.models.shapes.BaseShape;
 import com.cesar.models.shapes.enums.RotationStatus;
+import com.cesar.utils.constants.SizeConstants;
 
 /**
  * Handles the rotation movement of each shape
@@ -36,12 +37,28 @@ class RotateShapeMove implements IShapeMove
 	}
 	
 	/**
-	 * Don't need to check board limits, because it's just a rotation
+	 * Check all board limits, top, right, bottom, left
 	 * @param	shape
 	 * @return
 	 */
 	public function shapeReachedBoardLimits(shape:BaseShape):Bool
 	{
-		return false;
+		var shapeReachedtLimit:Bool = false;
+		
+		var minWithHeight:Int = 0;
+		var maxWidth:Int = (cast((SizeConstants.BOARD_WIDTH / SizeConstants.BLOCK_SIZE), Int));
+		var maxHeight:Int = (cast((SizeConstants.BOARD_HEIGHT / SizeConstants.BLOCK_SIZE), Int));
+		
+		for (i in 0...shape.Blocks.length) 
+		{
+			if (shape.Blocks[i].XPosition >= maxWidth || shape.Blocks[i].XPosition < minWithHeight
+				|| shape.Blocks[i].YPosition >= maxHeight || shape.Blocks[i].YPosition < 0)
+			{
+				shapeReachedtLimit = true;
+				break;
+			}
+		}
+		
+		return shapeReachedtLimit;
 	}
 }

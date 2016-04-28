@@ -1,5 +1,6 @@
 package com.cesar.commands;
 
+import com.cesar.commands.signals.ErrorSignal;
 import com.cesar.models.board.TetrisBoardModel;
 import com.cesar.models.business.factories.ActionShapeFactory;
 import com.cesar.models.business.factories.ShapeFactory;
@@ -20,26 +21,35 @@ class ShapeActionCommand extends Command
 {
 	@inject public var tetrisBoardModel:TetrisBoardModel;
 	@inject public var shapeAction:ShapeAction;
+	@inject public var errorSignal:ErrorSignal;
 
 	public function new() { }
 	
 	override public function execute():Void
 	{
-		//if there is no current shape on the board
-		if (tetrisBoardModel.get_CurrentShape() == null)
+		try
 		{
-			//creates a random shape and add it to the board
-			var shape = ShapeFactory.CreateNewRandomShape();
-			if (shape != null)
+			//if there is no current shape on the board
+			if (tetrisBoardModel.get_CurrentShape() == null)
 			{
-				tetrisBoardModel.set_CurrentShape(shape);
+				//creates a random shape and add it to the board
+				var shape = ShapeFactory.CreateNewRandomShape();
+				if (shape != null)
+				{
+					tetrisBoardModel.set_CurrentShape(shape);
+				}
+			}
+			else
+			{
+				//gets the specific action move according the action inputed by the user
+				var actionMove = ActionShapeFactory.CreateShapeActionMove(shapeAction, tetrisBoardModel);
+				actionMove.moveShape();
 			}
 		}
-		else
+		catch (unknown:Dynamic)
 		{
-			//gets the specific action move according the action inputed by the user
-			var actionMove = ActionShapeFactory.CreateShapeActionMove(shapeAction, tetrisBoardModel);
-			actionMove.moveShape();
+			var error:String = "Error occurred while moving the shape: " + Std.string(unknown);
+			errorSignal.dispatch(error);			
 		}
 	}
 }

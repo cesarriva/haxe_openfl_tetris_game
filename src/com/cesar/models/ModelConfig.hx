@@ -1,6 +1,10 @@
 package com.cesar.models;
 
 import com.cesar.models.board.TetrisBoardModel;
+import com.cesar.models.business.gameRules.CheckGameOver;
+import com.cesar.models.business.gameRules.ICheckGameOver;
+import com.cesar.models.business.gameRules.IRowFillerChecker;
+import com.cesar.models.business.gameRules.RowFillerChecker;
 import com.cesar.models.signals.GameOverSignal;
 import com.cesar.models.signals.ShapeUpdatedSignal;
 import robotlegs.bender.framework.api.IConfig;
@@ -23,5 +27,7 @@ class ModelConfig implements IConfig
 		injector.map(TetrisBoardModel).asSingleton();
 		injector.map(ShapeUpdatedSignal).asSingleton();
 		injector.map(GameOverSignal).asSingleton();
+		injector.map(ICheckGameOver).toSingleton(CheckGameOver);
+		injector.map(IRowFillerChecker).toSingleton(RowFillerChecker);
 	}
 }

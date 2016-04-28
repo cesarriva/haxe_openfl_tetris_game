@@ -1,5 +1,7 @@
 package com.cesar.models.board;
 
+import com.cesar.models.business.gameRules.ICheckGameOver;
+import com.cesar.models.business.gameRules.IRowFillerChecker;
 import com.cesar.models.shapes.BaseShape;
 import com.cesar.models.signals.GameOverSignal;
 import com.cesar.models.signals.ShapeUpdatedSignal;
@@ -13,6 +15,7 @@ import com.cesar.utils.constants.SizeConstants;
 @:keepSub
 class TetrisBoardModel
 {
+	//Properties********************
 	/**
 	 * Matrix 10x18, containing boolean values
 	 */
@@ -28,10 +31,15 @@ class TetrisBoardModel
 	 */
 	private var currentShape:BaseShape;
 	
+	@inject public var checkGameOver:ICheckGameOver;
+	
+	@inject public var rowFillerChecker:IRowFillerChecker;
+	
+	//Signals************************
 	/**
 	 * Singal dispatched when this model is updated
 	 */
-	@inject public var shapeUpdateSignal:ShapeUpdatedSignal;
+	@inject public var updateBoardModelSignal:ShapeUpdatedSignal;
 	
 	/**
 	 * Signal dispatched when the game is over
@@ -62,7 +70,7 @@ class TetrisBoardModel
 	public function set_CurrentShape(value:BaseShape):Void
 	{
 		currentShape = value;
-		shapeUpdateSignal.dispatch(this);
+		updateBoardModelSignal.dispatch(this);
 	}
 	
 	public function get_Board():Array<Array<Bool>>
@@ -71,104 +79,36 @@ class TetrisBoardModel
 	}
 	
 	/**
-	 * Calls to land a shape. Used when a shape reaches the limit of
+	 * Calls to land a shape. Used when a shape reaches the bottom limit of
 	 * the board or colide with another landed shape
 	 */
 	public function landShape():Void
 	{
+		//update the board with the new shape
 		landedShapes.push(currentShape);
 		landShapeInTheBoard(currentShape);
 		
-		checkRowFill();
+		//check row fill
+		handleRowFill(currentShape);
 		
-		if (shapeReachTheBoard())
+		//check game over
+		if (checkGameOver.actualShapeReachTheTop(currentShape))
 		{
 			gameOverSignal.dispatch();
 		}
-	}
-	
-	/**
-	 * Checks if the current landed shape
-	 * reachs the top of the board
-	 * @return
-	 */
-	private function shapeReachTheBoard():Bool
-	{
-		var reach:Bool = false;
-
-		for (i in 0...currentShape.Blocks.length) 
+		else
 		{
-			if (currentShape.Blocks[i].YPosition == 0)
-			{
-				reach = true;
-				break;
-			}
-		}
-		return reach;
-	}
-	
-	/**
-	 * Called after the landed to check if there is any
-	 * row totally filled, if yes, remove it and update
-	 * all positions and shapes above
-	 * TODO: this method is not working properly yet..take a look after
-	 */
-	private function checkRowFill():Void
-	{
-		var rowNumber:Int = -1;
-		var rowsErased:Bool = false;
-		
-		for (i in 0...currentShape.Blocks.length) 
-		{
-			var yPos = currentShape.Blocks[i].YPosition;
-			
-			if (yPos != rowNumber)
-			{
-				rowNumber = yPos;
-				rowsErased = mustEraseRow(rowNumber);
-				if (rowsErased)
-				{
-					eraseRow(rowNumber);
-				}
-			}
-		}
-		
-		if (rowsErased)
-		{
-			shapeUpdateSignal.dispatch(this);
+			//distatch signal to update the view
+			updateBoardModelSignal.dispatch(this);
 		}
 	}
 	
-	private function mustEraseRow(rowNumber:Int):Bool
+	private function handleRowFill(shape:BaseShape):Void
 	{
-		var mustErase:Bool = true;
-		
-		for (i in 0...board.length) 
-		{
-			if (!board[i][rowNumber])
-			{
-				mustErase = false;
-				break;
-			}
-		}
-		
-		return mustErase;
+		var yCoordinates:Array<Int> = rowFillerChecker.getYCoordinatesForTheShape(shape);
+		rowFillerChecker.handleRowFillAndUpdateBoard(yCoordinates, board);
 	}
 	
-	private function eraseRow(rowNumber:Int)
-	{
-		var controlRowUpdate:Int = rowNumber;
-		for (i in 0...board.length) 
-		{
-			board[i][controlRowUpdate] = false;
-			
-			while (controlRowUpdate >= 0)
-			{
-				board[i][controlRowUpdate] = board[i][controlRowUpdate--];
-			}
-			controlRowUpdate = rowNumber;
-		}
-	}
 	
 	/**
 	 * Update the matrix, setting true to its positions that already

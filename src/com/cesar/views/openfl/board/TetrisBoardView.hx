@@ -34,7 +34,10 @@ class TetrisBoardView extends Sprite
 	private var rowQuantity:Int;
 	
 	private var gameOverLabel:TextField;
-		
+	
+	private var errorLabel:TextField;
+	var errorFormat:TextFormat = new TextFormat("_sans", 20, 0xFF0000, true);
+	
 	public function new() 
 	{
 		super();
@@ -62,6 +65,7 @@ class TetrisBoardView extends Sprite
 	public function UpdateBoardState(tetrisBoard:TetrisBoardModel):Void
 	{
 		cleanBoard();
+		createGrid();
 		paintBoardWithUpdatedModel(tetrisBoard);
 		arrowPressed = false;
 	}
@@ -76,6 +80,17 @@ class TetrisBoardView extends Sprite
 		showGameOverLabel();
 	}
 	
+	public function showErrorMessage(errorMsg:String):Void
+	{
+		errorLabel = new TextField();
+		errorLabel.text = errorMsg;
+		errorLabel.defaultTextFormat = errorFormat;
+		errorLabel.width = 600;
+		errorLabel.height = 300;
+		errorLabel.y = 600;
+		addChild(errorLabel);
+	}
+	
 	private function showGameOverLabel():Void
 	{
 		var format:TextFormat = new TextFormat("_sans", 20, 0xbbbbbb, true);
@@ -83,7 +98,7 @@ class TetrisBoardView extends Sprite
 		
 		gameOverLabel = new TextField();
 		gameOverLabel.selectable = false;
-		gameOverLabel.text = "GAME OVER!";
+		gameOverLabel.text = "GAME OVER!!!!";
 		gameOverLabel.defaultTextFormat = format;
 		gameOverLabel.x = 130;
 		gameOverLabel.y = 280;
@@ -92,17 +107,7 @@ class TetrisBoardView extends Sprite
 	
 	private function cleanBoard():Void
 	{
-		graphics.beginFill(0xFFFFFF);
-		
-		for (i in 0...columnQuantity)
-		{
-			for (j in 0...rowQuantity)
-			{
-				graphics.drawRect(((i * blockSize)), ((j * blockSize)), (blockSize), (blockSize));
-			}
-		}
-		
-		graphics.endFill();
+		graphics.clear();
 	}
 	
 	private function paintBoardWithUpdatedModel(tetrisBoard:TetrisBoardModel):Void
